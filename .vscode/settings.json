@@ -1,0 +1,8 @@
+{
+	"python.defaultInterpreterPath": "./venv/bin",
+	"files.exclude": {
+		"build/": true,
+		"venv/": true,
+		"*.spec": true,
+	}
+}
