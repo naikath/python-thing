@@ -35,7 +35,7 @@ def custom_prompt(parent, archivo1, archivo2):
     return result["value"]
 
 # Clase principal de la aplicación para comparar archivos PPTX
-class PPTXComparadorApp:
+class ComparadorArchivosApp:
     def __init__(self, root):
         # Inicializa la ventana principal
         self.root = root
@@ -59,7 +59,7 @@ class PPTXComparadorApp:
         self.lbl_info = tk.Label(root, text="No hay carpeta seleccionada")
         self.lbl_info.pack()
 
-        # ACTUALIZADA: tabla con columnas agrupadas por tipo de archivo
+        # Tabla con columnas agrupadas por tipo de archivo
         self.tree = ttk.Treeview(root, columns=("tipo", "archivo1", "archivo2", "similitud"), show="headings", selectmode="extended")
         for col in ("tipo", "archivo1", "archivo2", "similitud"):
             # Establece el nombre de cada columna
@@ -131,12 +131,23 @@ class PPTXComparadorApp:
                 tipo1 = os.path.splitext(a1)[1].lower()
                 tipo2 = os.path.splitext(a2)[1].lower()
                 if tipo1 != tipo2:
-                    continue  # comparo solo entre mismos tipos
+                    # comparo solo entre mismos tipos
+                    continue
+                texto1 = self.limpiar_texto(contenidos[a1])
+                texto2 = self.limpiar_texto(contenidos[a2])
                 # Calcula la similitud de su contenido textual
-                sim = self.similitud(contenidos[a1], contenidos[a2])
+                sim = self.similitud(texto1, texto2)
                 if sim >= 0.85 and sim < 1.0:
                     # Añade los archivos con similitud parcial a la lista
                     self.agregar_resultado(a1, a2, sim)
+
+        # Ordenar por tipo
+        self.similares.sort(key=lambda x: x[0])
+
+        # Volver a mostrar la tabla ordenada
+        self.tree.delete(*self.tree.get_children())
+        for tipo, a1, a2, sim in self.similares:
+            self.tree.insert("", "end", values=(tipo, a1, a2, f"{sim*100:.1f}%"))
 
     def agregar_resultado(self, archivo1, archivo2, sim):
         # Agrega un resultado de comparación a la tabla y a la lista de resultados
@@ -148,9 +159,6 @@ class PPTXComparadorApp:
         # Almacena el resultado de la comparación y lo muestra en la tabla
         # Guarda el par de archivos y su similitud
         self.similares.append((tipo, rel1, rel2, sim))
-        # Agrega los resultados a la tabla con el valor de similitud en porcentaje
-        # Por defecto se propone borrar archivo2
-        self.tree.insert("", "end", values=(tipo, rel1, rel2, f"{sim*100:.1f}%"))
 
     def borrar_seleccionados(self):
         # Método para eliminar los archivos seleccionados en la tabla
@@ -292,6 +300,9 @@ class PPTXComparadorApp:
                 contenido.extend([str(cell) for cell in row if cell is not None])
         return "\n".join(contenido)
 
+    def limpiar_texto(self, texto):
+        return " ".join(texto.lower().split())
+
     def similitud(self, txt1, txt2):
         # Calcula la similitud entre dos textos
         return SequenceMatcher(None, txt1, txt2).ratio()
@@ -299,5 +310,5 @@ class PPTXComparadorApp:
 # --- EJECUCIÓN DE LA APLICACIÓN ---
 if __name__ == "__main__":
     root = tk.Tk()
-    app = PPTXComparadorApp(root)
+    app = ComparadorArchivosApp(root)
     root.mainloop()
