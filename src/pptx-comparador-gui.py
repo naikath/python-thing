@@ -2,13 +2,15 @@ import os
 import hashlib
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
-from pptx import Presentation
 from difflib import SequenceMatcher
 from collections import defaultdict
 import pandas as pd
 
+from pptx import Presentation
+from docx import Document
+from openpyxl import load_workbook
+
 def custom_prompt(parent, archivo1, archivo2):
-    """Ventana modal que permite elegir qué archivo borrar mostrando sus nombres."""
     top = tk.Toplevel(parent)
     top.title("¿Qué archivo querés borrar?")
     top.grab_set()
@@ -38,7 +40,7 @@ class PPTXComparadorApp:
         # Inicializa la ventana principal
         self.root = root
         # Título de la ventana
-        self.root.title("🧠 Comparador de PowerPoints")
+        self.root.title("🧠 Comparador de Archivos")
         # Tamaño de la ventana
         self.root.geometry("1000x600")
 
@@ -94,7 +96,7 @@ class PPTXComparadorApp:
         self.tree.delete(*self.tree.get_children())
 
         # 🔍 Buscar todos los archivos .pptx en la carpeta seleccionada
-        self.archivos = self.buscar_pptx(carpeta)
+        self.archivos = self.buscar_archivos(carpeta)
         # Diccionario para almacenar los archivos agrupados por hash
         hashes = defaultdict(list)
         # Diccionario para almacenar el texto extraído de cada archivo
@@ -164,7 +166,7 @@ class PPTXComparadorApp:
         errores = []
 
         # Copia de los items porque vamos a ir modificando el tree
-        for item in items:
+        for item in list(items):
             # Obtiene los valores de la fila seleccionada
             valores = self.tree.item(item)["values"]
             archivo1_rel, archivo2_rel = valores[0], valores[1]
@@ -231,11 +233,12 @@ class PPTXComparadorApp:
     # FUNCIONES AUXILIARES
     # -------------------------------
 
-    def buscar_pptx(self, carpeta):
+    def buscar_archivos(self, carpeta):
         # Busca todos los archivos .pptx en la carpeta de forma recursiva
+        extensiones = (".pptx", ".docx", ".xlsx")
         return [os.path.join(root, f)
                 for root, _, files in os.walk(carpeta)
-                for f in files if f.lower().endswith(".pptx")]
+                for f in files if f.lower().endswith(extensiones)]
 
     def hash_md5(self, archivo):
         # Calcula el hash MD5 (identificador único) de un archivo binario
@@ -249,12 +252,31 @@ class PPTXComparadorApp:
         return h.hexdigest()
 
     def extraer_texto(self, archivo):
+        # Detecta tipo de archivo y aplica extractor correspondiente
+        if archivo.lower().endswith(".pptx"):
+            return self.extraer_texto_pptx(archivo)
+        elif archivo.lower().endswith(".docx"):
+            return self.extraer_texto_docx(archivo)
+        elif archivo.lower().endswith(".xlsx"):
+            return self.extraer_texto_xlsx(archivo)
+        return ""
+
+    def extraer_texto_pptx(self, archivo):
         # Extrae el texto de todas las diapositivas de un archivo pptx
-        try:
-            prs = Presentation(archivo)
-            return "\n".join(shape.text for slide in prs.slides for shape in slide.shapes if hasattr(shape, "text"))
-        except Exception:
-            return ""
+        prs = Presentation(archivo)
+        return "\n".join(shape.text for slide in prs.slides for shape in slide.shapes if hasattr(shape, "text"))
+
+    def extraer_texto_docx(self, archivo):
+        doc = Document(archivo)
+        return "\n".join(p.text for p in doc.paragraphs if p.text.strip())
+
+    def extraer_texto_xlsx(self, archivo):
+        wb = load_workbook(archivo, data_only=True)
+        contenido = []
+        for sheet in wb.worksheets:
+            for row in sheet.iter_rows(values_only=True):
+                contenido.extend([str(cell) for cell in row if cell is not None])
+        return "\n".join(contenido)
 
     def similitud(self, txt1, txt2):
         # Calcula la similitud entre dos textos
