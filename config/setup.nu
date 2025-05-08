@@ -9,3 +9,5 @@ use std "path add"
 path add $path_python
 path add $path_pip
 path add $path_git
+
+source ./git-aliases-source.nu
