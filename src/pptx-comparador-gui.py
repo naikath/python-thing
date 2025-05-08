@@ -8,25 +8,24 @@ from collections import defaultdict
 import pandas as pd
 
 def custom_prompt(parent):
-    # Create a modal top-level window
+    # Crea una ventana modal personalizada para elegir entre dos opciones
     top = tk.Toplevel(parent)
-    top.title("Elige una opción")
-    top.grab_set()  # Makes the prompt modal (blocks main window)
+    top.title("¿Qué archivo querés borrar?")
+    top.grab_set()  # Hace modal la ventana
 
     result = {"value": None}
 
-    tk.Label(top, text="¿Qué querés hacer?").pack(padx=20, pady=10)
+    tk.Label(top, text="¿Qué archivo querés borrar?").pack(padx=20, pady=10)
 
     def choose(option):
         result["value"] = option
         top.destroy()
 
-    # Buttons with custom return values
-    tk.Button(top, text="Opción A", command=lambda: choose("A")).pack(side="left", padx=10, pady=10)
-    tk.Button(top, text="Opción B", command=lambda: choose("B")).pack(side="left", padx=10, pady=10)
+    tk.Button(top, text="🗑️ Borrar Archivo 1", command=lambda: choose("A")).pack(side="left", padx=10, pady=10)
+    tk.Button(top, text="🗑️ Borrar Archivo 2", command=lambda: choose("B")).pack(side="left", padx=10, pady=10)
     tk.Button(top, text="Cancelar", command=top.destroy).pack(side="left", padx=10, pady=10)
 
-    top.wait_window()  # Waits until this window is closed
+    top.wait_window()  # Espera a que se cierre la ventana
     return result["value"]
 
 # Clase principal de la aplicación para comparar archivos PPTX
@@ -166,14 +165,15 @@ class PPTXComparadorApp:
             valores = self.tree.item(item)["values"]
             archivo1_rel, archivo2_rel = valores[0], valores[1]
 
-            # Preguntar qué archivo borrar
-            eleccion = messagebox.askquestion(
-                "¿Qué archivo querés borrar?",
-                f"Fila:\n\n1️⃣ {archivo1_rel}\n\n2️⃣ {archivo2_rel}\n\n¿Querés borrar el Archivo 1?",
-                icon='question'
-            )
+            # Usamos el custom_prompt para elegir cuál borrar
+            eleccion = custom_prompt(self.root)
+            if eleccion == "A":
+                archivo_borrar_rel = archivo1_rel
+            elif eleccion == "B":
+                archivo_borrar_rel = archivo2_rel
+            else:
+                continue  # Si se canceló, no hace nada
 
-            archivo_borrar_rel = archivo1_rel if eleccion == 'yes' else archivo2_rel
             archivo_borrar_abs = os.path.join(self.carpeta_base, archivo_borrar_rel)
 
             try:
