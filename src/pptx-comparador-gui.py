@@ -95,8 +95,10 @@ class PPTXComparadorApp:
 
     def agregar_resultado(self, archivo1, archivo2, sim):
         """Agrega un resultado de comparación a la tabla y a la lista de resultados."""
-        self.similares.append((archivo1, archivo2, sim))
-        self.tree.insert("", "end", values=(archivo1, archivo2, f"{sim*100:.1f}%", archivo2))  # Por defecto se propone borrar archivo2
+        rel1 = os.path.relpath(archivo1, self.carpeta_base)
+        rel2 = os.path.relpath(archivo2, self.carpeta_base)
+        self.similares.append((rel1, rel2, sim))
+        self.tree.insert("", "end", values=(rel1, rel2, f"{sim*100:.1f}%", rel2))  # Por defecto se propone borrar archivo2
 
     def borrar_seleccionados(self):
         """Borra los archivos seleccionados en la tabla."""
@@ -112,7 +114,7 @@ class PPTXComparadorApp:
         errores = []
         for item in items:
             valores = self.tree.item(item)["values"]
-            archivo_borrar = valores[3]
+            archivo_borrar = os.path.join(self.carpeta_base, valores[3])  # Reconstruir ruta absoluta
             try:
                 os.remove(archivo_borrar)
             except Exception as e:
