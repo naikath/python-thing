@@ -11,3 +11,5 @@ path add $path_pip
 path add $path_git
 
 source ./git-aliases-source.nu
+
+source ./commands.nu
