@@ -1,14 +1,3 @@
-"""
-Para generar un ejecutable standalone (.exe) de este script con PyInstaller:
-1. Asegurate de tener PyInstaller instalado:
-   pip install pyinstaller
-
-2. Ejecutá en la terminal:
-   pyinstaller --noconsole --onefile --name ComparadorPPTX pptx_comparador_gui.py
-
-Esto creará un ejecutable en la carpeta /dist que podrás distribuir sin necesidad de instalar Python.
-"""
-
 import os
 import hashlib
 import tkinter as tk
@@ -18,22 +7,22 @@ from difflib import SequenceMatcher
 from collections import defaultdict
 import pandas as pd
 
-class PPTXComparadorApp:
+class AppCompararPptx:
     def __init__(self, root):
         self.root = root
         self.root.title("🧠 Comparador de PowerPoints")
         self.root.geometry("1000x600")
 
-        self.similares = []  # Almacena tuplas con archivos similares o duplicados
+        self.archivos_similares = []  # Almacena tuplas con archivos similares o duplicados
         self.archivos = []   # Lista de todos los archivos pptx encontrados
 
         # Botón para elegir carpeta
-        self.btn_seleccionar = tk.Button(root, text="📂 Seleccionar Carpeta", command=self.seleccionar_carpeta)
-        self.btn_seleccionar.pack(pady=10)
+        self.boton_seleccionar = tk.Button(root, text="📂 Seleccionar Carpeta", command=self.seleccionar_carpeta)
+        self.boton_seleccionar.pack(pady=10)
 
         # Texto informativo sobre la carpeta elegida
-        self.lbl_info = tk.Label(root, text="No hay carpeta seleccionada")
-        self.lbl_info.pack()
+        self.texto_info = tk.Label(root, text="No hay carpeta seleccionada")
+        self.texto_info.pack()
 
         # Tabla para mostrar archivos comparados
         self.tree = ttk.Treeview(root, columns=("archivo1", "archivo2", "similitud", "borrar"), show="headings", selectmode="extended")
@@ -43,21 +32,21 @@ class PPTXComparadorApp:
         self.tree.pack(expand=True, fill="both")
 
         # Botones adicionales
-        self.exportar_btn = tk.Button(root, text="📤 Exportar a Excel", command=self.exportar_excel)
-        self.exportar_btn.pack(pady=5)
+        self.boton_exportar = tk.Button(root, text="📤 Exportar a Excel", command=self.exportar_excel)
+        self.boton_exportar.pack(pady=5)
 
-        self.borrar_btn = tk.Button(root, text="🗑️ Borrar seleccionados", command=self.borrar_seleccionados)
-        self.borrar_btn.pack(pady=5)
+        self.boton_borrar = tk.Button(root, text="🗑️ Borrar seleccionados", command=self.borrar_seleccionados)
+        self.boton_borrar.pack(pady=5)
 
     def seleccionar_carpeta(self):
         # Abre diálogo para elegir carpeta
         carpeta = filedialog.askdirectory()
         if carpeta:
-            self.lbl_info.config(text=f"📁 Carpeta seleccionada: {carpeta}")
+            self.texto_info.config(text=f"📁 Carpeta seleccionada: {carpeta}")
             self.procesar_carpeta(carpeta)
 
     def procesar_carpeta(self, carpeta):
-        self.similares.clear()
+        self.archivos_similares.clear()
         self.tree.delete(*self.tree.get_children())
 
         # 🔍 Buscar todos los archivos .pptx
@@ -90,10 +79,10 @@ class PPTXComparadorApp:
                 if sim >= 0.85 and sim < 1.0:
                     self.agregar_resultado(a1, a2, sim)
 
-    def agregar_resultado(self, archivo1, archivo2, sim):
+    def agregar_resultado(self, archivo1, archivo2, similitud):
         # Almacena el resultado y lo agrega visualmente a la tabla
-        self.similares.append((archivo1, archivo2, sim))
-        self.tree.insert("", "end", values=(archivo1, archivo2, f"{sim*100:.1f}%", archivo2))  # Por defecto se propone borrar archivo2
+        self.archivos_similares.append((archivo1, archivo2, similitud))
+        self.tree.insert("", "end", values=(archivo1, archivo2, f"{similitud*100:.1f}%", archivo2))  # Por defecto se propone borrar archivo2
 
     def borrar_seleccionados(self):
         # Elimina el archivo marcado en la columna 'borrar' de cada fila seleccionada
@@ -124,7 +113,7 @@ class PPTXComparadorApp:
 
     def exportar_excel(self):
         # Exporta los archivos comparados a un archivo Excel
-        if not self.similares:
+        if not self.archivos_similares:
             messagebox.showinfo("Sin datos", "No hay resultados para exportar.")
             return
 
@@ -132,7 +121,7 @@ class PPTXComparadorApp:
             "Archivo 1": a1,
             "Archivo 2": a2,
             "Similitud (%)": round(sim * 100, 1)
-        } for a1, a2, sim in self.similares])
+        } for a1, a2, sim in self.archivos_similares])
 
         ruta = filedialog.asksaveasfilename(defaultextension=".xlsx", filetypes=[("Excel", "*.xlsx")])
         if ruta:
@@ -172,5 +161,5 @@ class PPTXComparadorApp:
 # --- EJECUCIÓN DE LA APLICACIÓN ---
 if __name__ == "__main__":
     root = tk.Tk()
-    app = PPTXComparadorApp(root)
+    app = AppCompararPptx(root)
     root.mainloop()
