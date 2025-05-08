@@ -7,6 +7,31 @@ from difflib import SequenceMatcher
 from collections import defaultdict
 import pandas as pd
 
+def custom_prompt(parent):
+    # Create a modal top-level window
+    top = tk.Toplevel(parent)
+    top.title("Elige una opción")
+    top.grab_set()  # Makes the prompt modal (blocks main window)
+
+    result = {"value": None}
+
+    tk.Label(top, text="¿Qué querés hacer?").pack(padx=20, pady=10)
+
+    def choose(option):
+        result["value"] = option
+        top.destroy()
+
+    # Buttons with custom return values
+    tk.Button(top, text="Archivo1", command=lambda: choose("1")).pack(side="left", padx=10, pady=10)
+    tk.Button(top, text="Archivo2", command=lambda: choose("2")).pack(side="left", padx=10, pady=10)
+    tk.Button(top, text="Cancelar", command=top.destroy).pack(side="left", padx=10, pady=10)
+
+    top.wait_window()  # Waits until this window is closed
+    return result["value"]
+
+
+
+
 class AppCompararPptx:
     def __init__(self, root):
         self.root = root
@@ -94,15 +119,21 @@ class AppCompararPptx:
             messagebox.showinfo("Info", "Seleccioná al menos una fila para borrar.")
             return
 
-        confirm = messagebox.askyesno("Confirmar", "¿Seguro que querés borrar los archivos seleccionados?")
-        if not confirm:
-            return
+        # confirm = messagebox.askyesno("Confirmar", "¿Seguro que querés borrar los archivos seleccionados?")
+        # if not confirm:
+        #     return
+        
+
 
         errores = []
         for item in items:
+
             archivo_borrar = self.tree.item(item)["values"][3]
+            res = custom_prompt(root)
+            print("Elegiste:", res)
             try:
-                os.remove(archivo_borrar)
+                # os.remove(archivo_borrar)
+                pass
             except Exception as e:
                 errores.append((archivo_borrar, str(e)))
 
