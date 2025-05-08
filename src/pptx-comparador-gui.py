@@ -118,13 +118,39 @@ class PPTXComparadorApp:
             return  # Si no se confirma, no hace nada
 
         errores = []  # Lista para almacenar posibles errores al intentar borrar los archivos
+        archivos_borrados = set()
+
         for item in items:
             valores = self.tree.item(item)["values"]  # Obtiene los valores de la fila seleccionada
-            archivo_borrar = os.path.join(self.carpeta_base, valores[3])  # El archivo a borrar está en la cuarta columna (borrar)
+            archivo1_rel, archivo2_rel = valores[0], valores[1]
+
+            # Preguntar qué archivo borrar
+            eleccion = messagebox.askquestion(
+                "¿Qué archivo querés borrar?",
+                f"Fila:\n\n1️⃣ {archivo1_rel}\n\n2️⃣ {archivo2_rel}\n\n¿Querés borrar el Archivo 1?",
+                icon='question'
+            )
+
+            archivo_borrar_rel = archivo1_rel if eleccion == 'yes' else archivo2_rel
+            archivo_borrar_abs = os.path.join(self.carpeta_base, archivo_borrar_rel)
+
             try:
-                os.remove(archivo_borrar)  # Intenta eliminar el archivo
+                os.remove(archivo_borrar_abs)  # Intenta eliminar el archivo
+                archivos_borrados.add(archivo_borrar_rel)
             except Exception as e:
-                errores.append((archivo_borrar, str(e)))  # Si hay error, lo almacena
+                errores.append((archivo_borrar_rel, str(e)))  # Si hay error, lo almacena
+
+        # Actualizar la lista de similares quitando los archivos borrados
+        nuevas_similares = []
+        for a1, a2, sim in self.similares:
+            if a1 not in archivos_borrados and a2 not in archivos_borrados:
+                nuevas_similares.append((a1, a2, sim))
+        self.similares = nuevas_similares
+
+        # Refrescar la tabla
+        self.tree.delete(*self.tree.get_children())  # Elimina las filas seleccionadas de la tabla
+        for a1, a2, sim in self.similares:
+            self.tree.insert("", "end", values=(a1, a2, f"{sim*100:.1f}%", a2))
 
         if errores:
             # Si hubo errores, muestra un mensaje con los detalles
@@ -132,7 +158,6 @@ class PPTXComparadorApp:
             messagebox.showwarning("Errores", mensaje)
         else:
             messagebox.showinfo("OK", "Archivos eliminados correctamente.")  # Muestra mensaje si se borraron correctamente
-        self.tree.delete(*items)  # Elimina las filas seleccionadas de la tabla
 
     def exportar_excel(self):
         # Método para exportar los resultados a un archivo Excel
