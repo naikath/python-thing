@@ -1,14 +1,3 @@
-"""
-Para generar un ejecutable standalone (.exe) de este script con PyInstaller:
-1. Asegurate de tener PyInstaller instalado:
-   pip install pyinstaller
-
-2. Ejecutá en la terminal:
-   pyinstaller --noconsole --onefile --name ComparadorPPTX pptx_comparador_gui.py
-
-Esto creará un ejecutable en la carpeta /dist que podrás distribuir sin necesidad de instalar Python.
-"""
-
 import os
 import hashlib
 import tkinter as tk

@@ -1,0 +1,26 @@
+
+Ejecutable:
+
+Para generar un ejecutable standalone (.exe) de este script con PyInstaller:
+1. Asegurate de tener PyInstaller instalado:
+pip install pyinstaller
+
+2. Ejecutá en la terminal:
+pyinstaller --noconsole --onefile --name ComparadorPPTX pptx_comparador_gui.py
+
+Esto creará un ejecutable en la carpeta /dist que podrás distribuir sin necesidad de instalar Python.
+
+---
+
+Dependencias:
+
+pip install pandas python-pptx pyinstaller python-docx openpyxl
+
+---
+
+Entorno local:
+
+If you wish to install a non-Debian-packaged Python package,
+create a virtual environment using python3 -m venv path/to/venv.
+Then use path/to/venv/bin/python and path/to/venv/bin/pip.
+Make sure you have python3-full installed.
