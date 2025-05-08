@@ -17,6 +17,7 @@ class AppCompararPptx:
         self.archivos = []   # Lista de todos los archivos pptx encontrados
 
         # Botón para elegir carpeta
+        # UI setup
         self.boton_seleccionar = tk.Button(root, text="📂 Seleccionar Carpeta", command=self.seleccionar_carpeta)
         self.boton_seleccionar.pack(pady=10)
 
@@ -43,46 +44,48 @@ class AppCompararPptx:
         carpeta = filedialog.askdirectory()
         if carpeta:
             self.texto_info.config(text=f"📁 Carpeta seleccionada: {carpeta}")
-            self.procesar_carpeta(carpeta)
+            self._procesar_carpeta(carpeta)
 
-    def procesar_carpeta(self, carpeta):
+    def _procesar_carpeta(self, carpeta):
         self.archivos_similares.clear()
         self.tree.delete(*self.tree.get_children())
-
         # 🔍 Buscar todos los archivos .pptx
-        self.archivos = self.buscar_pptx(carpeta)
+        self.archivos = self._buscar_pptx(carpeta)
+
         hashes = defaultdict(list)
-        contenidos = {}
+        textos = {}
 
         # 🧾 Recorremos todos los archivos y:
         # 1. Calculamos hash MD5 (para detectar duplicados exactos)
         # 2. Extraemos texto de las diapositivas (para similitud parcial)
         for archivo in self.archivos:
-            h = self.hash_md5(archivo)
+            h = self._hash_md5(archivo)
             hashes[h].append(archivo)
-            contenidos[archivo] = self.extraer_texto(archivo)
+            textos[archivo] = self._extraer_texto(archivo)
 
         # 🧩 Comparación por HASH: si hay más de un archivo con mismo hash → son duplicados exactos
         for grupo in hashes.values():
             if len(grupo) > 1:
                 # Iteramos sobre todos los pares posibles del grupo
                 for i in range(len(grupo)):
-                    for j in range(i+1, len(grupo)):
-                        self.agregar_resultado(grupo[i], grupo[j], 1.0)
+                    for j in range(i + 1, len(grupo)):
+                        self._agregar_resultado(grupo[i], grupo[j], 1.0)
 
         # 📐 Comparación por contenido textual (diapositivas)
         # Recorremos todos los pares posibles de archivos diferentes
         for i in range(len(self.archivos)):
-            for j in range(i+1, len(self.archivos)):
+            for j in range(i + 1, len(self.archivos)):
                 a1, a2 = self.archivos[i], self.archivos[j]
-                sim = self.similitud(contenidos[a1], contenidos[a2])
-                if sim >= 0.85 and sim < 1.0:
-                    self.agregar_resultado(a1, a2, sim)
+                sim = self._similitud(textos[a1], textos[a2])
+                if 0.85 <= sim < 1.0:
+                    self._agregar_resultado(a1, a2, sim)
 
-    def agregar_resultado(self, archivo1, archivo2, similitud):
+    def _agregar_resultado(self, archivo1, archivo2, similitud):
         # Almacena el resultado y lo agrega visualmente a la tabla
         self.archivos_similares.append((archivo1, archivo2, similitud))
-        self.tree.insert("", "end", values=(archivo1, archivo2, f"{similitud*100:.1f}%", archivo2))  # Por defecto se propone borrar archivo2
+        self.tree.insert("", "end", values=(archivo1, archivo2, f"{similitud * 100:.1f}%", archivo2))
+        # Por defecto se propone borrar archivo2
+
 
     def borrar_seleccionados(self):
         # Elimina el archivo marcado en la columna 'borrar' de cada fila seleccionada
@@ -97,8 +100,7 @@ class AppCompararPptx:
 
         errores = []
         for item in items:
-            valores = self.tree.item(item)["values"]
-            archivo_borrar = valores[3]
+            archivo_borrar = self.tree.item(item)["values"][3]
             try:
                 os.remove(archivo_borrar)
             except Exception as e:
@@ -132,13 +134,15 @@ class AppCompararPptx:
     # FUNCIONES AUXILIARES
     # -------------------------------
 
-    def buscar_pptx(self, carpeta):
+    @staticmethod
+    def _buscar_pptx(carpeta):
         # Busca todos los archivos .pptx recursivamente
         return [os.path.join(root, f)
                 for root, _, files in os.walk(carpeta)
                 for f in files if f.lower().endswith(".pptx")]
 
-    def hash_md5(self, archivo):
+    @staticmethod
+    def _hash_md5(archivo):
         # Calcula el hash MD5 (identificador único) de un archivo binario
         h = hashlib.md5()
         with open(archivo, "rb") as f:
@@ -146,7 +150,8 @@ class AppCompararPptx:
                 h.update(bloque)
         return h.hexdigest()
 
-    def extraer_texto(self, archivo):
+    @staticmethod
+    def _extraer_texto(archivo):
         # Lee cada diapositiva del archivo y extrae todo el texto visible
         try:
             prs = Presentation(archivo)
@@ -154,7 +159,8 @@ class AppCompararPptx:
         except:
             return ""
 
-    def similitud(self, txt1, txt2):
+    @staticmethod
+    def _similitud(txt1, txt2):
         # Calcula cuán similares son dos textos (0.0 = nada parecido, 1.0 = iguales)
         return SequenceMatcher(None, txt1, txt2).ratio()
 
