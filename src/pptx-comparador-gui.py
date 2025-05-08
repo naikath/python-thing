@@ -23,12 +23,17 @@ class PPTXComparadorApp:
     def __init__(self, root):
         # Inicializa la ventana principal
         self.root = root
-        self.root.title("🧠 Comparador de PowerPoints")  # Título de la ventana
-        self.root.geometry("1000x600")  # Tamaño de la ventana
+        # Título de la ventana
+        self.root.title("🧠 Comparador de PowerPoints")
+        # Tamaño de la ventana
+        self.root.geometry("1000x600")
 
-        self.similares = []  # Lista que almacena los resultados de archivos similares
-        self.archivos = []   # Lista que almacena los archivos pptx encontrados en la carpeta seleccionada
-        self.carpeta_base = ""  # Carpeta de base elegida, para calcular rutas relativas
+        # Lista que almacena los resultados de archivos similares
+        self.similares = []
+        # Lista que almacena los archivos pptx encontrados en la carpeta seleccionada
+        self.archivos = []
+        # Carpeta de base elegida, para calcular rutas relativas
+        self.carpeta_base = ""
 
         # Botón para seleccionar la carpeta donde se encuentran los archivos PPTX
         self.btn_seleccionar = tk.Button(root, text="📂 Seleccionar Carpeta", command=self.seleccionar_carpeta)
@@ -41,9 +46,12 @@ class PPTXComparadorApp:
         # Tabla para mostrar los archivos comparados, con las columnas: archivo1, archivo2, similitud y borrar
         self.tree = ttk.Treeview(root, columns=("archivo1", "archivo2", "similitud", "borrar"), show="headings", selectmode="extended")
         for col in ("archivo1", "archivo2", "similitud", "borrar"):
-            self.tree.heading(col, text=col)  # Establece el nombre de cada columna
-            self.tree.column(col, width=250 if col != "similitud" else 80)  # Ajusta el tamaño de las columnas
-        self.tree.pack(expand=True, fill="both")  # Agrega la tabla a la ventana
+            # Establece el nombre de cada columna
+            self.tree.heading(col, text=col)
+            # Ajusta el tamaño de las columnas
+            self.tree.column(col, width=250 if col != "similitud" else 80)
+        # Agrega la tabla a la ventana
+        self.tree.pack(expand=True, fill="both")
 
         # Botón para exportar los resultados a un archivo de Excel
         self.exportar_btn = tk.Button(root, text="📤 Exportar a Excel", command=self.exportar_excel)
@@ -55,29 +63,39 @@ class PPTXComparadorApp:
 
     def seleccionar_carpeta(self):
         # Método para seleccionar la carpeta con archivos PPTX
-        carpeta = filedialog.askdirectory()  # Abre el cuadro de diálogo para seleccionar una carpeta
+        # Abre el cuadro de diálogo para seleccionar una carpeta
+        carpeta = filedialog.askdirectory()
         if carpeta:
-            self.lbl_info.config(text=f"📁 Carpeta seleccionada: {carpeta}")  # Actualiza el texto de la etiqueta con la carpeta seleccionada
+            # Actualiza el texto de la etiqueta con la carpeta seleccionada
+            self.lbl_info.config(text=f"📁 Carpeta seleccionada: {carpeta}")
             self.carpeta_base = carpeta
-            self.procesar_carpeta(carpeta)  # Procesa los archivos dentro de la carpeta
+            # Procesa los archivos dentro de la carpeta
+            self.procesar_carpeta(carpeta)
 
     def procesar_carpeta(self, carpeta):
         # Procesa todos los archivos pptx en la carpeta seleccionada
-        self.similares.clear()  # Limpia la lista de archivos similares
-        self.tree.delete(*self.tree.get_children())  # Elimina todas las filas de la tabla
+        # Limpia la lista de archivos similares
+        self.similares.clear()
+        # Elimina todas las filas de la tabla
+        self.tree.delete(*self.tree.get_children())
 
         # 🔍 Buscar todos los archivos .pptx en la carpeta seleccionada
         self.archivos = self.buscar_pptx(carpeta)
-        hashes = defaultdict(list)  # Diccionario para almacenar los archivos agrupados por hash
-        contenidos = {}  # Diccionario para almacenar el texto extraído de cada archivo
+        # Diccionario para almacenar los archivos agrupados por hash
+        hashes = defaultdict(list)
+        # Diccionario para almacenar el texto extraído de cada archivo
+        contenidos = {}
 
         # 🧾 Recorremos todos los archivos y realizamos dos procesos:
         # 1. Calcular el hash MD5 para detectar duplicados exactos
         # 2. Extraer el texto de cada diapositiva para comparar su contenido textual
         for archivo in self.archivos:
-            h = self.hash_md5(archivo)  # Calcula el hash MD5 del archivo
-            hashes[h].append(archivo)  # Agrupa el archivo por su hash
-            contenidos[archivo] = self.extraer_texto(archivo)  # Extrae el texto del archivo
+            # Calcula el hash MD5 del archivo
+            h = self.hash_md5(archivo)
+            # Agrupa el archivo por su hash
+            hashes[h].append(archivo)
+            # Extrae el texto del archivo
+            contenidos[archivo] = self.extraer_texto(archivo)
 
         # 🧩 Comparación por HASH: si hay más de un archivo con el mismo hash, son duplicados exactos
         for grupo in hashes.values():
@@ -85,43 +103,56 @@ class PPTXComparadorApp:
                 # Compara todos los pares posibles dentro del grupo de archivos con el mismo hash
                 for i in range(len(grupo)):
                     for j in range(i+1, len(grupo)):
-                        self.agregar_resultado(grupo[i], grupo[j], 1.0)  # Añade los duplicados exactos a la lista
+                        # Añade los duplicados exactos a la lista
+                        self.agregar_resultado(grupo[i], grupo[j], 1.0)
 
         # 📐 Comparación por contenido textual (diapositivas)
         # Compara todos los pares de archivos diferentes
         for i in range(len(self.archivos)):
             for j in range(i+1, len(self.archivos)):
-                a1, a2 = self.archivos[i], self.archivos[j]  # Selecciona dos archivos distintos
-                sim = self.similitud(contenidos[a1], contenidos[a2])  # Calcula la similitud de su contenido textual
+                # Selecciona dos archivos distintos
+                a1, a2 = self.archivos[i], self.archivos[j]
+                # Calcula la similitud de su contenido textual
+                sim = self.similitud(contenidos[a1], contenidos[a2])
                 if sim >= 0.85 and sim < 1.0:
-                    self.agregar_resultado(a1, a2, sim)  # Añade los archivos con similitud parcial a la lista
+                    # Añade los archivos con similitud parcial a la lista
+                    self.agregar_resultado(a1, a2, sim)
 
     def agregar_resultado(self, archivo1, archivo2, sim):
         # Agrega un resultado de comparación a la tabla y a la lista de resultados
-        rel1 = os.path.relpath(archivo1, self.carpeta_base)  # Ruta relativa
-        rel2 = os.path.relpath(archivo2, self.carpeta_base)  # Ruta relativa
+        # Ruta relativa
+        rel1 = os.path.relpath(archivo1, self.carpeta_base)
+        # Ruta relativa
+        rel2 = os.path.relpath(archivo2, self.carpeta_base)
         # Almacena el resultado de la comparación y lo muestra en la tabla
-        self.similares.append((rel1, rel2, sim))  # Guarda el par de archivos y su similitud
+        # Guarda el par de archivos y su similitud
+        self.similares.append((rel1, rel2, sim))
         # Agrega los resultados a la tabla con el valor de similitud en porcentaje
-        self.tree.insert("", "end", values=(rel1, rel2, f"{sim*100:.1f}%", rel2))  # Por defecto se propone borrar archivo2
+        # Por defecto se propone borrar archivo2
+        self.tree.insert("", "end", values=(rel1, rel2, f"{sim*100:.1f}%", rel2))
 
     def borrar_seleccionados(self):
         # Método para eliminar los archivos seleccionados en la tabla
-        items = self.tree.selection()  # Obtiene los elementos seleccionados
+        # Obtiene los elementos seleccionados
+        items = self.tree.selection()
         if not items:
-            messagebox.showinfo("Info", "Seleccioná al menos una fila para borrar.")  # Muestra un mensaje si no se seleccionó nada
+            # Muestra un mensaje si no se seleccionó nada
+            messagebox.showinfo("Info", "Seleccioná al menos una fila para borrar.")
             return
 
         # Confirma si realmente se quieren borrar los archivos
         confirm = messagebox.askyesno("Confirmar", "¿Seguro que querés borrar los archivos seleccionados?")
         if not confirm:
-            return  # Si no se confirma, no hace nada
+            # Si no se confirma, no hace nada
+            return
 
-        errores = []  # Lista para almacenar posibles errores al intentar borrar los archivos
+        # Lista para almacenar posibles errores al intentar borrar los archivos
+        errores = []
         archivos_borrados = set()
 
         for item in items:
-            valores = self.tree.item(item)["values"]  # Obtiene los valores de la fila seleccionada
+            # Obtiene los valores de la fila seleccionada
+            valores = self.tree.item(item)["values"]
             archivo1_rel, archivo2_rel = valores[0], valores[1]
 
             # Preguntar qué archivo borrar
@@ -135,10 +166,12 @@ class PPTXComparadorApp:
             archivo_borrar_abs = os.path.join(self.carpeta_base, archivo_borrar_rel)
 
             try:
-                os.remove(archivo_borrar_abs)  # Intenta eliminar el archivo
+                # Intenta eliminar el archivo
+                os.remove(archivo_borrar_abs)
                 archivos_borrados.add(archivo_borrar_rel)
             except Exception as e:
-                errores.append((archivo_borrar_rel, str(e)))  # Si hay error, lo almacena
+                # Si hay error, lo almacena
+                errores.append((archivo_borrar_rel, str(e)))
 
         # Actualizar la lista de similares quitando los archivos borrados
         nuevas_similares = []
@@ -148,7 +181,8 @@ class PPTXComparadorApp:
         self.similares = nuevas_similares
 
         # Refrescar la tabla
-        self.tree.delete(*self.tree.get_children())  # Elimina las filas seleccionadas de la tabla
+        # Elimina las filas seleccionadas de la tabla
+        self.tree.delete(*self.tree.get_children())
         for a1, a2, sim in self.similares:
             self.tree.insert("", "end", values=(a1, a2, f"{sim*100:.1f}%", a2))
 
@@ -157,12 +191,14 @@ class PPTXComparadorApp:
             mensaje = "⚠️ Archivos con errores al borrar:\n" + "\n".join(f"{f}: {e}" for f, e in errores)
             messagebox.showwarning("Errores", mensaje)
         else:
-            messagebox.showinfo("OK", "Archivos eliminados correctamente.")  # Muestra mensaje si se borraron correctamente
+            # Muestra mensaje si se borraron correctamente
+            messagebox.showinfo("OK", "Archivos eliminados correctamente.")
 
     def exportar_excel(self):
         # Método para exportar los resultados a un archivo Excel
         if not self.similares:
-            messagebox.showinfo("Sin datos", "No hay resultados para exportar.")  # Muestra mensaje si no hay resultados
+            # Muestra mensaje si no hay resultados
+            messagebox.showinfo("Sin datos", "No hay resultados para exportar.")
             return
 
         # Convierte los resultados a un DataFrame de Pandas
@@ -175,8 +211,10 @@ class PPTXComparadorApp:
         # Abre el cuadro de diálogo para elegir la ruta y el nombre del archivo a guardar
         ruta = filedialog.asksaveasfilename(defaultextension=".xlsx", filetypes=[("Excel", "*.xlsx")])
         if ruta:
-            df.to_excel(ruta, index=False)  # Exporta los datos a un archivo Excel
-            messagebox.showinfo("Exportado", f"Archivo guardado en:\n{ruta}")  # Muestra mensaje de éxito
+            # Exporta los datos a un archivo Excel
+            df.to_excel(ruta, index=False)
+            # Muestra mensaje de éxito
+            messagebox.showinfo("Exportado", f"Archivo guardado en:\n{ruta}")
 
     # -------------------------------
     # FUNCIONES AUXILIARES
@@ -192,9 +230,12 @@ class PPTXComparadorApp:
         # Calcula el hash MD5 (identificador único) de un archivo binario
         h = hashlib.md5()
         with open(archivo, "rb") as f:
-            for bloque in iter(lambda: f.read(4096), b""):  # Lee el archivo en bloques
-                h.update(bloque)  # Actualiza el hash con cada bloque
-        return h.hexdigest()  # Retorna el hash MD5
+            # Lee el archivo en bloques
+            for bloque in iter(lambda: f.read(4096), b""):
+                # Actualiza el hash con cada bloque
+                h.update(bloque)
+        # Retorna el hash MD5
+        return h.hexdigest()
 
     def extraer_texto(self, archivo):
         # Extrae el texto de todas las diapositivas de un archivo pptx
