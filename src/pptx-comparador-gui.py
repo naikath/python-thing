@@ -2,18 +2,45 @@ import os
 import hashlib
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
-from pptx import Presentation
 from difflib import SequenceMatcher
 from collections import defaultdict
 import pandas as pd
 
+from pptx import Presentation
+from docx import Document
+from openpyxl import load_workbook
+
+def custom_prompt(parent, archivo1, archivo2):
+    top = tk.Toplevel(parent)
+    top.title("¿Qué archivo querés borrar?")
+    top.grab_set()
+
+    result = {"value": None}
+
+    tk.Label(top, text="Elegí el archivo a borrar:", font=("Segoe UI", 10, "bold")).pack(padx=20, pady=(10, 5))
+    tk.Label(top, text=f"1️⃣ {archivo1}").pack(padx=20, pady=2)
+    tk.Label(top, text=f"2️⃣ {archivo2}").pack(padx=20, pady=2)
+
+    def choose(option):
+        result["value"] = option
+        top.destroy()
+
+    frame = tk.Frame(top)
+    frame.pack(pady=10)
+    tk.Button(frame, text="🗑️ Borrar Archivo 1", command=lambda: choose("A")).pack(side="left", padx=5)
+    tk.Button(frame, text="🗑️ Borrar Archivo 2", command=lambda: choose("B")).pack(side="left", padx=5)
+    tk.Button(frame, text="Cancelar", command=top.destroy).pack(side="left", padx=5)
+
+    top.wait_window()
+    return result["value"]
+
 # Clase principal de la aplicación para comparar archivos PPTX
-class PPTXComparadorApp:
+class ComparadorArchivosApp:
     def __init__(self, root):
         # Inicializa la ventana principal
         self.root = root
         # Título de la ventana
-        self.root.title("🧠 Comparador de PowerPoints")
+        self.root.title("🧠 Comparador de Archivos")
         # Tamaño de la ventana
         self.root.geometry("1000x600")
 
@@ -32,13 +59,13 @@ class PPTXComparadorApp:
         self.lbl_info = tk.Label(root, text="No hay carpeta seleccionada")
         self.lbl_info.pack()
 
-        # Tabla para mostrar los archivos comparados, con las columnas: archivo1, archivo2, similitud y borrar
-        self.tree = ttk.Treeview(root, columns=("archivo1", "archivo2", "similitud", "borrar"), show="headings", selectmode="extended")
-        for col in ("archivo1", "archivo2", "similitud", "borrar"):
+        # Tabla con columnas agrupadas por tipo de archivo
+        self.tree = ttk.Treeview(root, columns=("tipo", "archivo1", "archivo2", "similitud"), show="headings", selectmode="extended")
+        for col in ("tipo", "archivo1", "archivo2", "similitud"):
             # Establece el nombre de cada columna
             self.tree.heading(col, text=col)
             # Ajusta el tamaño de las columnas
-            self.tree.column(col, width=250 if col != "similitud" else 80)
+            self.tree.column(col, width=150 if col == "tipo" else 300)
         # Agrega la tabla a la ventana
         self.tree.pack(expand=True, fill="both")
 
@@ -69,7 +96,7 @@ class PPTXComparadorApp:
         self.tree.delete(*self.tree.get_children())
 
         # 🔍 Buscar todos los archivos .pptx en la carpeta seleccionada
-        self.archivos = self.buscar_pptx(carpeta)
+        self.archivos = self.buscar_archivos(carpeta)
         # Diccionario para almacenar los archivos agrupados por hash
         hashes = defaultdict(list)
         # Diccionario para almacenar el texto extraído de cada archivo
@@ -101,11 +128,26 @@ class PPTXComparadorApp:
             for j in range(i+1, len(self.archivos)):
                 # Selecciona dos archivos distintos
                 a1, a2 = self.archivos[i], self.archivos[j]
+                tipo1 = os.path.splitext(a1)[1].lower()
+                tipo2 = os.path.splitext(a2)[1].lower()
+                if tipo1 != tipo2:
+                    # comparo solo entre mismos tipos
+                    continue
+                texto1 = self.limpiar_texto(contenidos[a1])
+                texto2 = self.limpiar_texto(contenidos[a2])
                 # Calcula la similitud de su contenido textual
-                sim = self.similitud(contenidos[a1], contenidos[a2])
+                sim = self.similitud(texto1, texto2)
                 if sim >= 0.85 and sim < 1.0:
                     # Añade los archivos con similitud parcial a la lista
                     self.agregar_resultado(a1, a2, sim)
+
+        # Ordenar por tipo
+        self.similares.sort(key=lambda x: x[0])
+
+        # Volver a mostrar la tabla ordenada
+        self.tree.delete(*self.tree.get_children())
+        for tipo, a1, a2, sim in self.similares:
+            self.tree.insert("", "end", values=(tipo, a1, a2, f"{sim*100:.1f}%"))
 
     def agregar_resultado(self, archivo1, archivo2, sim):
         # Agrega un resultado de comparación a la tabla y a la lista de resultados
@@ -113,12 +155,10 @@ class PPTXComparadorApp:
         rel1 = os.path.relpath(archivo1, self.carpeta_base)
         # Ruta relativa
         rel2 = os.path.relpath(archivo2, self.carpeta_base)
+        tipo = os.path.splitext(archivo1)[1].replace('.', '').upper()
         # Almacena el resultado de la comparación y lo muestra en la tabla
         # Guarda el par de archivos y su similitud
-        self.similares.append((rel1, rel2, sim))
-        # Agrega los resultados a la tabla con el valor de similitud en porcentaje
-        # Por defecto se propone borrar archivo2
-        self.tree.insert("", "end", values=(rel1, rel2, f"{sim*100:.1f}%", rel2))
+        self.similares.append((tipo, rel1, rel2, sim))
 
     def borrar_seleccionados(self):
         # Método para eliminar los archivos seleccionados en la tabla
@@ -137,43 +177,40 @@ class PPTXComparadorApp:
 
         # Lista para almacenar posibles errores al intentar borrar los archivos
         errores = []
-        archivos_borrados = set()
 
-        for item in items:
+        # Copia de los items porque vamos a ir modificando el tree
+        for item in list(items):
             # Obtiene los valores de la fila seleccionada
             valores = self.tree.item(item)["values"]
-            archivo1_rel, archivo2_rel = valores[0], valores[1]
+            _, archivo1_rel, archivo2_rel, _ = valores
 
-            # Preguntar qué archivo borrar
-            eleccion = messagebox.askquestion(
-                "¿Qué archivo querés borrar?",
-                f"Fila:\n\n1️⃣ {archivo1_rel}\n\n2️⃣ {archivo2_rel}\n\n¿Querés borrar el Archivo 1?",
-                icon='question'
-            )
+            # Usamos el custom_prompt para elegir cuál borrar
+            eleccion = custom_prompt(self.root, archivo1_rel, archivo2_rel)
+            if eleccion == "A":
+                archivo_borrar_rel = archivo1_rel
+            elif eleccion == "B":
+                archivo_borrar_rel = archivo2_rel
+            else:
+                continue  # Si se canceló, no hace nada
 
-            archivo_borrar_rel = archivo1_rel if eleccion == 'yes' else archivo2_rel
             archivo_borrar_abs = os.path.join(self.carpeta_base, archivo_borrar_rel)
 
             try:
                 # Intenta eliminar el archivo
                 os.remove(archivo_borrar_abs)
-                archivos_borrados.add(archivo_borrar_rel)
             except Exception as e:
                 # Si hay error, lo almacena
                 errores.append((archivo_borrar_rel, str(e)))
+                continue
 
-        # Actualizar la lista de similares quitando los archivos borrados
-        nuevas_similares = []
-        for a1, a2, sim in self.similares:
-            if a1 not in archivos_borrados and a2 not in archivos_borrados:
-                nuevas_similares.append((a1, a2, sim))
-        self.similares = nuevas_similares
+            # Eliminar de self.similares
+            self.similares = [tpl for tpl in self.similares if archivo_borrar_rel not in tpl]
 
-        # Refrescar la tabla
-        # Elimina las filas seleccionadas de la tabla
-        self.tree.delete(*self.tree.get_children())
-        for a1, a2, sim in self.similares:
-            self.tree.insert("", "end", values=(a1, a2, f"{sim*100:.1f}%", a2))
+            # Refrescar la tabla
+            # Elimina las filas seleccionadas de la tabla
+            self.tree.delete(*self.tree.get_children())
+            for tipo, a1, a2, sim in self.similares:
+                self.tree.insert("", "end", values=(tipo, a1, a2, f"{sim*100:.1f}%"))
 
         if errores:
             # Si hubo errores, muestra un mensaje con los detalles
@@ -192,10 +229,11 @@ class PPTXComparadorApp:
 
         # Convierte los resultados a un DataFrame de Pandas
         df = pd.DataFrame([{
+            "Tipo": tipo,
             "Archivo 1": a1,
             "Archivo 2": a2,
             "Similitud (%)": round(sim * 100, 1)
-        } for a1, a2, sim in self.similares])
+        } for tipo, a1, a2, sim in self.similares])
 
         # Abre el cuadro de diálogo para elegir la ruta y el nombre del archivo a guardar
         ruta = filedialog.asksaveasfilename(defaultextension=".xlsx", filetypes=[("Excel", "*.xlsx")])
@@ -209,11 +247,12 @@ class PPTXComparadorApp:
     # FUNCIONES AUXILIARES
     # -------------------------------
 
-    def buscar_pptx(self, carpeta):
+    def buscar_archivos(self, carpeta):
         # Busca todos los archivos .pptx en la carpeta de forma recursiva
+        extensiones = (".pptx", ".docx", ".xlsx")
         return [os.path.join(root, f)
                 for root, _, files in os.walk(carpeta)
-                for f in files if f.lower().endswith(".pptx")]
+                for f in files if f.lower().endswith(extensiones)]
 
     def hash_md5(self, archivo):
         # Calcula el hash MD5 (identificador único) de un archivo binario
@@ -227,12 +266,42 @@ class PPTXComparadorApp:
         return h.hexdigest()
 
     def extraer_texto(self, archivo):
+        # Detecta tipo de archivo y aplica extractor correspondiente
+        if archivo.lower().endswith(".pptx"):
+            return self.extraer_texto_pptx(archivo)
+        elif archivo.lower().endswith(".docx"):
+            return self.extraer_texto_docx(archivo)
+        elif archivo.lower().endswith(".xlsx"):
+            return self.extraer_texto_xlsx(archivo)
+        return ""
+
+    def extraer_texto_pptx(self, archivo):
         # Extrae el texto de todas las diapositivas de un archivo pptx
-        try:
-            prs = Presentation(archivo)
-            return "\n".join(shape.text for slide in prs.slides for shape in slide.shapes if hasattr(shape, "text"))
-        except Exception:
-            return ""
+        prs = Presentation(archivo)
+        return "\n".join(shape.text for slide in prs.slides for shape in slide.shapes if hasattr(shape, "text"))
+
+    def extraer_texto_docx(self, archivo):
+        doc = Document(archivo)
+        contenido = []
+        for para in doc.paragraphs:
+            if para.text.strip():
+                contenido.append(para.text)
+        for table in doc.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    contenido.append(cell.text)
+        return "\n".join(contenido)
+
+    def extraer_texto_xlsx(self, archivo):
+        wb = load_workbook(archivo, data_only=True)
+        contenido = []
+        for sheet in wb.worksheets:
+            for row in sheet.iter_rows(values_only=True):
+                contenido.extend([str(cell) for cell in row if cell is not None])
+        return "\n".join(contenido)
+
+    def limpiar_texto(self, texto):
+        return " ".join(texto.lower().split())
 
     def similitud(self, txt1, txt2):
         # Calcula la similitud entre dos textos
@@ -241,5 +310,5 @@ class PPTXComparadorApp:
 # --- EJECUCIÓN DE LA APLICACIÓN ---
 if __name__ == "__main__":
     root = tk.Tk()
-    app = PPTXComparadorApp(root)
+    app = ComparadorArchivosApp(root)
     root.mainloop()
