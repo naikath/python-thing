@@ -7,25 +7,29 @@ from difflib import SequenceMatcher
 from collections import defaultdict
 import pandas as pd
 
-def custom_prompt(parent):
-    # Crea una ventana modal personalizada para elegir entre dos opciones
+def custom_prompt(parent, archivo1, archivo2):
+    """Ventana modal que permite elegir qué archivo borrar mostrando sus nombres."""
     top = tk.Toplevel(parent)
     top.title("¿Qué archivo querés borrar?")
-    top.grab_set()  # Hace modal la ventana
+    top.grab_set()
 
     result = {"value": None}
 
-    tk.Label(top, text="¿Qué archivo querés borrar?").pack(padx=20, pady=10)
+    tk.Label(top, text="Elegí el archivo a borrar:", font=("Segoe UI", 10, "bold")).pack(padx=20, pady=(10, 5))
+    tk.Label(top, text=f"1️⃣ {archivo1}").pack(padx=20, pady=2)
+    tk.Label(top, text=f"2️⃣ {archivo2}").pack(padx=20, pady=2)
 
     def choose(option):
         result["value"] = option
         top.destroy()
 
-    tk.Button(top, text="🗑️ Borrar Archivo 1", command=lambda: choose("A")).pack(side="left", padx=10, pady=10)
-    tk.Button(top, text="🗑️ Borrar Archivo 2", command=lambda: choose("B")).pack(side="left", padx=10, pady=10)
-    tk.Button(top, text="Cancelar", command=top.destroy).pack(side="left", padx=10, pady=10)
+    frame = tk.Frame(top)
+    frame.pack(pady=10)
+    tk.Button(frame, text="🗑️ Borrar Archivo 1", command=lambda: choose("A")).pack(side="left", padx=5)
+    tk.Button(frame, text="🗑️ Borrar Archivo 2", command=lambda: choose("B")).pack(side="left", padx=5)
+    tk.Button(frame, text="Cancelar", command=top.destroy).pack(side="left", padx=5)
 
-    top.wait_window()  # Espera a que se cierre la ventana
+    top.wait_window()
     return result["value"]
 
 # Clase principal de la aplicación para comparar archivos PPTX
@@ -158,15 +162,15 @@ class PPTXComparadorApp:
 
         # Lista para almacenar posibles errores al intentar borrar los archivos
         errores = []
-        archivos_borrados = set()
 
+        # Copia de los items porque vamos a ir modificando el tree
         for item in items:
             # Obtiene los valores de la fila seleccionada
             valores = self.tree.item(item)["values"]
             archivo1_rel, archivo2_rel = valores[0], valores[1]
 
             # Usamos el custom_prompt para elegir cuál borrar
-            eleccion = custom_prompt(self.root)
+            eleccion = custom_prompt(self.root, archivo1_rel, archivo2_rel)
             if eleccion == "A":
                 archivo_borrar_rel = archivo1_rel
             elif eleccion == "B":
@@ -179,17 +183,13 @@ class PPTXComparadorApp:
             try:
                 # Intenta eliminar el archivo
                 os.remove(archivo_borrar_abs)
-                archivos_borrados.add(archivo_borrar_rel)
             except Exception as e:
                 # Si hay error, lo almacena
                 errores.append((archivo_borrar_rel, str(e)))
+                continue
 
-        # Actualizar la lista de similares quitando los archivos borrados
-        nuevas_similares = []
-        for a1, a2, sim in self.similares:
-            if a1 not in archivos_borrados and a2 not in archivos_borrados:
-                nuevas_similares.append((a1, a2, sim))
-        self.similares = nuevas_similares
+            # Eliminar de self.similares
+            self.similares = [tpl for tpl in self.similares if archivo_borrar_rel not in tpl]
 
         # Refrescar la tabla
         # Elimina las filas seleccionadas de la tabla
