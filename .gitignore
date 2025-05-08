@@ -1,0 +1,10 @@
+
+# Distribution / packaging
+build/
+dist/
+
+# PyInstaller
+*.spec
+
+# Environments
+venv/
