@@ -48,4 +48,19 @@ if $os_name == "linux" {
 
 source ./git-aliases-source.nu
 
-source ./commands.nu
+alias py = python
+
+# Install python required dependencies
+def py-install-deps [] {
+	const deps = [pandas python-pptx pyinstaller python-docx openpyxl]
+	pip install ...$deps
+}
+
+# Create python executable
+def py-build-exe [] {
+	const script_name = 'pptx-comparador-gui.py'
+	const path_script = $'($proyect_root)/src/($script_name)'
+	const exe_name = 'ComparadorPPTX'
+	cd $proyect_root
+	pyinstaller --noconsole --onefile --name $exe_name $path_script
+}
