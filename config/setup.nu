@@ -12,10 +12,20 @@ if $os_name == "windows" {
 	const path_pip = $'($path_winpython)\python\Scripts'
 	# portable git
 	const path_git = $'($path_local_bin)\PortableGit\bin'
+	
+	const paths = [
+		$path_python
+		$path_pip
+		$path_git
+	]
 
-	path add $path_python
-	path add $path_pip
-	path add $path_git
+	# add each path if not already
+	$paths | each {
+		|path|
+		if ($path not-in $env.PATH) {
+			path add $path
+		}
+	}
 
 }
 
