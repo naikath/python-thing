@@ -11,13 +11,3 @@ def create-py-exe [] {
 	const name = 'ComparadorPPTX'
 	pyinstaller --noconsole --onefile --name $name $path_script
 }
-
-def create-py-venv [] {
-	python3 -m venv $'($proyect_root)/venv'
-}
-
-def --env source-py-venv [] {
-	const path_python_venv = $'($proyect_root)/venv/bin'
-	use std "path add"
-	path add $path_python_venv
-}
