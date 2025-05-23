@@ -1,0 +1,12 @@
+{
+	"recommendations": [
+		"kuscamara.electron",
+		"usernamehw.errorlens",
+		"naumovs.color-highlight",
+		"eamodio.gitlens",
+		"oderwat.indent-rainbow",
+		"pkief.material-icon-theme",
+		"christian-kohler.path-intellisense",
+		"ms-python.python"
+	]
+}
