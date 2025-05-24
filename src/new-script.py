@@ -137,7 +137,7 @@ class ComparadorArchivosApp:
                 texto2 = self.limpiar_texto(contenidos[a2])
                 # Calcula la similitud de su contenido textual
                 sim = self.similitud(texto1, texto2)
-                if sim >= 0.85 and sim < 1.0:
+                if 0.85 <= sim < 1.0:
                     # Añade los archivos con similitud parcial a la lista
                     self.agregar_resultado(a1, a2, sim)
 
