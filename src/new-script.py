@@ -11,62 +11,71 @@ from docx import Document
 from openpyxl import load_workbook
 
 def custom_prompt(parent, archivo1, archivo2):
+    """Crea prompt para elegir opciones"""
+    # Crea una ventana para el prompt
     prompt_window = tk.Toplevel(parent)
     prompt_window.title("¿Qué archivo querés borrar?")
+    # Bloquea interaccion de las otras ventanas de tkinter
     prompt_window.grab_set()
 
+    # Resultado del prompt
     result = {"value": None}
 
+    # Texto en la ventana con los archivos
     tk.Label(prompt_window, text="Elegí el archivo a borrar:", font=("Segoe UI", 10, "bold")).pack(padx=20, pady=(10, 5))
     tk.Label(prompt_window, text=f"1️⃣ {archivo1}").pack(padx=20, pady=2)
     tk.Label(prompt_window, text=f"2️⃣ {archivo2}").pack(padx=20, pady=2)
 
+    # Guarda el valor y cierra la ventana
     def choose(option):
         result["value"] = option
         prompt_window.destroy()
 
+    # Crea un frame para el layout
     frame = tk.Frame(prompt_window)
     frame.pack(pady=10)
+
+    # Crea botones y asigna una funcion para elegir la opcion
     tk.Button(frame, text="🗑️ Borrar Archivo 1", command=lambda: choose("A")).pack(side="left", padx=5)
     tk.Button(frame, text="🗑️ Borrar Archivo 2", command=lambda: choose("B")).pack(side="left", padx=5)
+    # Crea botón para cancelar y cerrar la ventana
     tk.Button(frame, text="Cancelar", command=prompt_window.destroy).pack(side="left", padx=5)
 
+    # Espera a que la ventana se cierre (al elegir una opcion)
     prompt_window.wait_window()
     return result["value"]
 
-# Clase principal de la aplicación para comparar archivos PPTX
 class ComparadorArchivosApp:
+    """Clase principal de la aplicación"""
+
     def __init__(self, root):
         # Inicializa la ventana principal
         self.root = root
-        # Título de la ventana
         self.root.title("🧠 Comparador de Archivos")
-        # Tamaño de la ventana
         self.root.geometry("1000x600")
 
         # Lista que almacena los resultados de archivos similares
         self.archivos_similares = []
-        # Lista que almacena los archivos pptx encontrados en la carpeta seleccionada
+        # Lista que almacena los archivos encontrados en la carpeta seleccionada
         self.archivos = []
-        # Carpeta de base elegida, para calcular rutas relativas
+        # Carpeta de base usada como referencia para las rutas relativas
         self.carpeta_base = ""
 
-        # Botón para seleccionar la carpeta donde se encuentran los archivos PPTX
+        # Botón para seleccionar la carpeta con los archivos
         self.boton_seleccionar = tk.Button(root, text="📂 Seleccionar Carpeta", command=self.seleccionar_carpeta)
         self.boton_seleccionar.pack(pady=10)
 
-        # Etiqueta para mostrar información sobre la carpeta seleccionada
+        # Texto con información de la carpeta seleccionada
         self.texto_info = tk.Label(root, text="No hay carpeta seleccionada")
         self.texto_info.pack()
 
         # Tabla con columnas agrupadas por tipo de archivo
         self.tabla = ttk.Treeview(root, columns=("tipo", "archivo1", "archivo2", "similitud"), show="headings", selectmode="extended")
         for col in ("tipo", "archivo1", "archivo2", "similitud"):
-            # Establece el nombre de cada columna
+            # Nombre y contenido del encabezado
             self.tabla.heading(col, text=col)
-            # Ajusta el tamaño de las columnas
+            # Tamaño de cada columna
             self.tabla.column(col, width=150 if col == "tipo" else 300)
-        # Agrega la tabla a la ventana
         self.tabla.pack(expand=True, fill="both")
 
         # Botón para exportar los resultados a un archivo de Excel
@@ -78,25 +87,26 @@ class ComparadorArchivosApp:
         self.boton_borrar.pack(pady=5)
 
     def seleccionar_carpeta(self):
-        # Método para seleccionar la carpeta con archivos PPTX
-        # Abre el cuadro de diálogo para seleccionar una carpeta
+        """Selecciona y procesa una carpeta si es seleccionada"""
+        # Selecciona una carpeta con un explorador de archivos
         carpeta = filedialog.askdirectory()
         if carpeta:
-            # Actualiza el texto de la etiqueta con la carpeta seleccionada
+            # Actualiza texto con la carpeta seleccionada
             self.texto_info.config(text=f"📁 Carpeta seleccionada: {carpeta}")
             self.carpeta_base = carpeta
             # Procesa los archivos dentro de la carpeta
             self.procesar_carpeta(carpeta)
 
     def procesar_carpeta(self, carpeta):
-        # Procesa todos los archivos pptx en la carpeta seleccionada
-        # Limpia la lista de archivos similares
+        """Procesa la carpeta con todos los metodos"""
+        # Limpia la lista de archivos similares existentes
         self.archivos_similares.clear()
         # Elimina todas las filas de la tabla
         self.tabla.delete(*self.tabla.get_children())
 
-        # 🔍 Buscar todos los archivos .pptx en la carpeta seleccionada
+        # 🔍 Buscar todos los archivos en la carpeta seleccionada
         self.archivos = self.buscar_archivos(carpeta)
+
         # Diccionario para almacenar los archivos agrupados por hash
         hashes = defaultdict(list)
         # Diccionario para almacenar el texto extraído de cada archivo
@@ -104,12 +114,13 @@ class ComparadorArchivosApp:
 
         # 🧾 Recorremos todos los archivos y realizamos dos procesos:
         # 1. Calcular el hash MD5 para detectar duplicados exactos
-        # 2. Extraer el texto de cada diapositiva para comparar su contenido textual
+        # 2. Extraer y comparar el contenido del texto
         for archivo in self.archivos:
             # Calcula el hash MD5 del archivo
             hash = self.hash_md5(archivo)
             # Agrupa el archivo por su hash
             hashes[hash].append(archivo)
+
             # Extrae el texto del archivo
             contenidos[archivo] = self.extraer_texto(archivo)
 
@@ -119,7 +130,7 @@ class ComparadorArchivosApp:
                 # Compara todos los pares posibles dentro del grupo de archivos con el mismo hash
                 for i in range(len(grupo)):
                     for j in range(i+1, len(grupo)):
-                        # Añade los duplicados exactos a la lista
+                        # Añade el primero en la lista de los hash y todos los demas como duplicados
                         self.agregar_resultado(grupo[i], grupo[j], 1.0)
 
         # 📐 Comparación por contenido textual (diapositivas)
@@ -128,20 +139,24 @@ class ComparadorArchivosApp:
             for j in range(i+1, len(self.archivos)):
                 # Selecciona dos archivos distintos
                 a1, a2 = self.archivos[i], self.archivos[j]
+
+                # Compara sólo entre archivos del mismo tipo
                 tipo1 = os.path.splitext(a1)[1].lower()
                 tipo2 = os.path.splitext(a2)[1].lower()
                 if tipo1 != tipo2:
-                    # comparo solo entre mismos tipos
                     continue
+
+                # Calcula la similitud del texto
                 texto1 = self.limpiar_texto(contenidos[a1])
                 texto2 = self.limpiar_texto(contenidos[a2])
-                # Calcula la similitud de su contenido textual
                 similitud = self.similitud_texto(texto1, texto2)
+                # Agrega el resultado en un cierto rango de coincidencia
+                # No se incluye el 1.0 ya que estaría duplicado con la comparación por hash
                 if 0.85 <= similitud < 1.0:
                     # Añade los archivos con similitud parcial a la lista
                     self.agregar_resultado(a1, a2, similitud)
 
-        # Ordenar por tipo
+        # Ordenar por tipo, el primer elemento de la tupla
         self.archivos_similares.sort(key=lambda x: x[0])
 
         # Volver a mostrar la tabla ordenada
@@ -150,18 +165,17 @@ class ComparadorArchivosApp:
             self.tabla.insert("", "end", values=(tipo, a1, a2, f"{similitud*100:.1f}%"))
 
     def agregar_resultado(self, archivo1, archivo2, similitud):
-        # Agrega un resultado de comparación a la tabla y a la lista de resultados
-        # Ruta relativa
+        """Agrega un resultado de la comparación a la lista"""
+        # Rutas relativas
         rel1 = os.path.relpath(archivo1, self.carpeta_base)
-        # Ruta relativa
         rel2 = os.path.relpath(archivo2, self.carpeta_base)
+        # Tipo de archivo
         tipo = os.path.splitext(archivo1)[1].replace('.', '').upper()
-        # Almacena el resultado de la comparación y lo muestra en la tabla
-        # Guarda el par de archivos y su similitud
+        # Almacena en la lista el resultado en una tupla
         self.archivos_similares.append((tipo, rel1, rel2, similitud))
 
     def borrar_seleccionados(self):
-        # Método para eliminar los archivos seleccionados en la tabla
+        """Método para eliminar los archivos seleccionados en la tabla"""
         # Obtiene los elementos seleccionados
         items = self.tabla.selection()
         if not items:
@@ -221,7 +235,7 @@ class ComparadorArchivosApp:
             messagebox.showinfo("OK", "Archivos eliminados correctamente.")
 
     def exportar_excel(self):
-        # Método para exportar los resultados a un archivo Excel
+        """Método para exportar los resultados a un archivo Excel"""
         if not self.archivos_similares:
             # Muestra mensaje si no hay resultados
             messagebox.showinfo("Sin datos", "No hay resultados para exportar.")
@@ -248,14 +262,14 @@ class ComparadorArchivosApp:
     # -------------------------------
 
     def buscar_archivos(self, carpeta):
-        # Busca todos los archivos .pptx en la carpeta de forma recursiva
+        """Busca todos los archivos en la carpeta de forma recursiva"""
         extensiones = (".pptx", ".docx", ".xlsx")
         return [os.path.join(root, file)
                 for root, _, files in os.walk(carpeta)
                 for file in files if file.lower().endswith(extensiones)]
 
     def hash_md5(self, archivo):
-        # Calcula el hash MD5 (identificador único) de un archivo binario
+        """Calcula el hash MD5 (identificador único) de un archivo binario"""
         hash = hashlib.md5()
         with open(archivo, "rb") as f:
             # Lee el archivo en bloques
@@ -266,7 +280,7 @@ class ComparadorArchivosApp:
         return hash.hexdigest()
 
     def extraer_texto(self, archivo):
-        # Detecta tipo de archivo y aplica extractor correspondiente
+        """Detecta tipo de archivo y aplica extractor correspondiente"""
         if archivo.lower().endswith(".pptx"):
             return self.extraer_texto_pptx(archivo)
         elif archivo.lower().endswith(".docx"):
@@ -276,11 +290,12 @@ class ComparadorArchivosApp:
         return ""
 
     def extraer_texto_pptx(self, archivo):
-        # Extrae el texto de todas las diapositivas de un archivo pptx
+        """Extrae el texto de todas las diapositivas de un archivo pptx"""
         prs = Presentation(archivo)
         return "\n".join(getattr(shape, "text") for slide in prs.slides for shape in slide.shapes if hasattr(shape, "text"))
 
     def extraer_texto_docx(self, archivo):
+        """Extrae el texto de todas las diapositivas de un archivo docx"""
         doc = Document(archivo)
         contenido = []
         for para in doc.paragraphs:
@@ -293,6 +308,7 @@ class ComparadorArchivosApp:
         return "\n".join(contenido)
 
     def extraer_texto_xlsx(self, archivo):
+        """Extrae el texto de todas las diapositivas de un archivo xlsx"""
         wb = load_workbook(archivo, data_only=True)
         contenido = []
         for sheet in wb.worksheets:
@@ -301,10 +317,11 @@ class ComparadorArchivosApp:
         return "\n".join(contenido)
 
     def limpiar_texto(self, texto):
+        """Removes any whitespace character and joins with spaces to a single string"""
         return " ".join(texto.lower().split())
 
     def similitud_texto(self, texto1, texto2):
-        # Calcula la similitud entre dos textos
+        """Calcula la similitud entre dos textos"""
         return SequenceMatcher(None, texto1, texto2).ratio()
 
 # --- EJECUCIÓN DE LA APLICACIÓN ---
