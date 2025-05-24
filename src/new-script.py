@@ -278,7 +278,7 @@ class ComparadorArchivosApp:
     def extraer_texto_pptx(self, archivo):
         # Extrae el texto de todas las diapositivas de un archivo pptx
         prs = Presentation(archivo)
-        return "\n".join(shape.text for slide in prs.slides for shape in slide.shapes if hasattr(shape, "text"))
+        return "\n".join(getattr(shape, "text") for slide in prs.slides for shape in slide.shapes if hasattr(shape, "text"))
 
     def extraer_texto_docx(self, archivo):
         doc = Document(archivo)
