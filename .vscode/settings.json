@@ -9,4 +9,19 @@
 	"python.analysis.inlayHints.functionReturnTypes": true,
 	"python.analysis.inlayHints.pytestParameters": true,
 	"python.analysis.inlayHints.variableTypes": true,
+	"python.analysis.typeCheckingMode": "standard",
+
+	"ruff.lineLength": 120,
+	"ruff.organizeImports": false,
+	"ruff.nativeServer": "on",
+	"ruff.lint.enable": true,
+
+	"[python]": {
+		"editor.formatOnSave": false,
+		"editor.codeActionsOnSave": {
+			"source.fixAll.ruff": "never",
+			"source.organizeImports.ruff": "never",
+		},
+		"editor.defaultFormatter": "charliermarsh.ruff",
+	},
 }
