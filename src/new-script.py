@@ -179,7 +179,7 @@ class ComparadorArchivosApp:
         errores = []
 
         # Copia de los items porque vamos a ir modificando el tree
-        for item in list(items):
+        for item in items:
             # Obtiene los valores de la fila seleccionada
             valores = self.tree.item(item)["values"]
             _, archivo1_rel, archivo2_rel, _ = valores
