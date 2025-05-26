@@ -51,7 +51,7 @@ class ComparadorArchivosApp:
     def __init__(self, root: tk.Tk) -> None:
         # Inicializa variables
         # Lista que almacena los resultados de archivos similares
-        self.archivos_similares = []
+        self.archivos_similares: list[tuple[str, str, str, float]] = []
         # Lista que almacena los archivos encontrados en la carpeta seleccionada
         self.archivos: list[str] = []
         # Carpeta de base usada como referencia para las rutas relativas
@@ -126,7 +126,7 @@ class ComparadorArchivosApp:
     def procesar_archivos(self) -> None:
         """Procesa y agrupa los archivos similares"""
         # Diccionario para almacenar los archivos agrupados por hash
-        hashes = defaultdict(list)
+        hashes: defaultdict[str, list[str]] = defaultdict(list)
         # Diccionario para almacenar el texto extraído de cada archivo
         contenidos = {}
 
@@ -174,17 +174,17 @@ class ComparadorArchivosApp:
                     # Añade los archivos con similitud parcial a la lista
                     self.agregar_resultado(a1, a2, similitud)
 
-    def agregar_resultado(self, archivo1, archivo2, similitud):
+    def agregar_resultado(self, archivo1: str, archivo2: str, similitud: float) -> None:
         """Agrega un resultado de la comparación a la lista"""
         # Rutas relativas
         rel1 = os.path.relpath(archivo1, self.carpeta_base)
         rel2 = os.path.relpath(archivo2, self.carpeta_base)
         # Tipo de archivo
-        tipo = os.path.splitext(archivo1)[1].replace('.', '').upper()
+        tipo: str = os.path.splitext(archivo1)[1].replace('.', '').upper()
         # Almacena en la lista el resultado en una tupla
         self.archivos_similares.append((tipo, rel1, rel2, similitud))
 
-    def borrar_seleccionados(self):
+    def borrar_seleccionados(self) -> None:
         """Método para eliminar los archivos seleccionados en la tabla"""
         # Obtiene los elementos seleccionados
         items = self.tabla.selection()
@@ -200,7 +200,7 @@ class ComparadorArchivosApp:
             return
 
         # Lista para almacenar posibles errores al intentar borrar los archivos
-        errores = []
+        errores: list[tuple[str, str]] = []
 
         # Copia de los items porque vamos a ir modificando el tree
         for item in items:
@@ -210,6 +210,7 @@ class ComparadorArchivosApp:
 
             # Usamos el custom_prompt para elegir cuál borrar
             eleccion = custom_prompt(self.root, archivo1_rel, archivo2_rel)
+            archivo_borrar_rel: str
             if eleccion == "A":
                 archivo_borrar_rel = archivo1_rel
             elif eleccion == "B":
@@ -244,7 +245,7 @@ class ComparadorArchivosApp:
             # Muestra mensaje si se borraron correctamente
             messagebox.showinfo("OK", "Archivos eliminados correctamente.")
 
-    def exportar_excel(self):
+    def exportar_excel(self) -> None:
         """Método para exportar los resultados a un archivo Excel"""
         if not self.archivos_similares:
             # Muestra mensaje si no hay resultados
@@ -278,7 +279,7 @@ class ComparadorArchivosApp:
                 for root, _, files in os.walk(carpeta)
                 for file in files if file.lower().endswith(extensiones)]
 
-    def hash_md5(self, archivo):
+    def hash_md5(self, archivo: str) -> str:
         """Calcula el hash MD5 (identificador único) de un archivo binario"""
         hash = hashlib.md5()
         with open(archivo, "rb") as f:
@@ -289,7 +290,7 @@ class ComparadorArchivosApp:
         # Retorna el hash MD5
         return hash.hexdigest()
 
-    def extraer_texto(self, archivo):
+    def extraer_texto(self, archivo: str) -> str:
         """Detecta tipo de archivo y aplica extractor correspondiente"""
         if archivo.lower().endswith(".pptx"):
             return self.extraer_texto_pptx(archivo)
@@ -299,15 +300,15 @@ class ComparadorArchivosApp:
             return self.extraer_texto_xlsx(archivo)
         return ""
 
-    def extraer_texto_pptx(self, archivo):
+    def extraer_texto_pptx(self, archivo: str) -> str:
         """Extrae el texto de todas las diapositivas de un archivo pptx"""
         prs = Presentation(archivo)
         return "\n".join(getattr(shape, "text") for slide in prs.slides for shape in slide.shapes if hasattr(shape, "text"))
 
-    def extraer_texto_docx(self, archivo):
+    def extraer_texto_docx(self, archivo: str) -> str:
         """Extrae el texto de todas las diapositivas de un archivo docx"""
         doc = Document(archivo)
-        contenido = []
+        contenido: list[str] = []
         for para in doc.paragraphs:
             if para.text.strip():
                 contenido.append(para.text)
@@ -317,20 +318,20 @@ class ComparadorArchivosApp:
                     contenido.append(cell.text)
         return "\n".join(contenido)
 
-    def extraer_texto_xlsx(self, archivo):
+    def extraer_texto_xlsx(self, archivo: str) -> str:
         """Extrae el texto de todas las diapositivas de un archivo xlsx"""
         wb = load_workbook(archivo, data_only=True)
-        contenido = []
+        contenido: list[str] = []
         for sheet in wb.worksheets:
             for row in sheet.iter_rows(values_only=True):
                 contenido.extend([str(cell) for cell in row if cell is not None])
         return "\n".join(contenido)
 
-    def limpiar_texto(self, texto):
+    def limpiar_texto(self, texto: str) -> str:
         """Removes any whitespace character and joins with spaces to a single string"""
         return " ".join(texto.lower().split())
 
-    def similitud_texto(self, texto1, texto2):
+    def similitud_texto(self, texto1: str, texto2: str) -> float:
         """Calcula la similitud entre dos textos"""
         return SequenceMatcher(None, texto1, texto2).ratio()
 
