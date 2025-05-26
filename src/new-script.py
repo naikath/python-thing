@@ -48,7 +48,7 @@ def custom_prompt(parent, archivo1, archivo2):
 class ComparadorArchivosApp:
     """Clase principal de la aplicación"""
 
-    def __init__(self, root):
+    def __init__(self, root: tk.Tk) -> None:
         # Inicializa variables
         # Lista que almacena los resultados de archivos similares
         self.archivos_similares = []
@@ -59,7 +59,7 @@ class ComparadorArchivosApp:
         # Inicializa la ventana
         self.setup_ui(root)
 
-    def setup_ui(self, root):
+    def setup_ui(self, root: tk.Tk) -> None:
         """Inicializa ui"""
         # Inicializa la ventana principal
         self.root = root
@@ -75,8 +75,9 @@ class ComparadorArchivosApp:
         self.texto_info.pack()
 
         # Tabla con columnas agrupadas por tipo de archivo
-        self.tabla = ttk.Treeview(root, columns=("tipo", "archivo1", "archivo2", "similitud"), show="headings", selectmode="extended")
-        for col in ("tipo", "archivo1", "archivo2", "similitud"):
+        columnas = ("tipo", "archivo1", "archivo2", "similitud")
+        self.tabla = ttk.Treeview(root, columns=columnas, show="headings", selectmode="extended")
+        for col in columnas:
             # Nombre y contenido del encabezado
             self.tabla.heading(col, text=col)
             # Tamaño de cada columna
