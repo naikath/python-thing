@@ -172,7 +172,7 @@ class ComparadorArchivosApp:
                 similitud = self.similitud_texto(texto1, texto2)
                 # Agrega el resultado en un cierto rango de coincidencia
                 # No se incluye el 1.0 ya que estaría duplicado con la comparación por hash
-                if 0.85 <= similitud < 1.0:
+                if 0.0 <= similitud < 1.0:
                     # Añade los archivos con similitud parcial a la lista
                     self.agregar_resultado(a1, a2, similitud)
 
