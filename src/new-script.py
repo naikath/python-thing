@@ -113,6 +113,18 @@ class ComparadorArchivosApp:
         # 🔍 Buscar todos los archivos en la carpeta seleccionada
         self.archivos = self.buscar_archivos(carpeta)
 
+        self.procesar_archivos()
+
+        # Ordenar por tipo, el primer elemento de la tupla
+        self.archivos_similares.sort(key=lambda x: x[0])
+
+        # Volver a mostrar la tabla ordenada
+        self.tabla.delete(*self.tabla.get_children())
+        for tipo, a1, a2, similitud in self.archivos_similares:
+            self.tabla.insert("", "end", values=(tipo, a1, a2, f"{similitud*100:.1f}%"))
+
+    def procesar_archivos(self) -> None:
+        """Procesa y agrupa los archivos similares"""
         # Diccionario para almacenar los archivos agrupados por hash
         hashes = defaultdict(list)
         # Diccionario para almacenar el texto extraído de cada archivo
@@ -161,14 +173,6 @@ class ComparadorArchivosApp:
                 if 0.85 <= similitud < 1.0:
                     # Añade los archivos con similitud parcial a la lista
                     self.agregar_resultado(a1, a2, similitud)
-
-        # Ordenar por tipo, el primer elemento de la tupla
-        self.archivos_similares.sort(key=lambda x: x[0])
-
-        # Volver a mostrar la tabla ordenada
-        self.tabla.delete(*self.tabla.get_children())
-        for tipo, a1, a2, similitud in self.archivos_similares:
-            self.tabla.insert("", "end", values=(tipo, a1, a2, f"{similitud*100:.1f}%"))
 
     def agregar_resultado(self, archivo1, archivo2, similitud):
         """Agrega un resultado de la comparación a la lista"""
