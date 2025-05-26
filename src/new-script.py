@@ -49,17 +49,22 @@ class ComparadorArchivosApp:
     """Clase principal de la aplicación"""
 
     def __init__(self, root):
-        # Inicializa la ventana principal
-        self.root = root
-        self.root.title("🧠 Comparador de Archivos")
-        self.root.geometry("1000x600")
-
+        # Inicializa variables
         # Lista que almacena los resultados de archivos similares
         self.archivos_similares = []
         # Lista que almacena los archivos encontrados en la carpeta seleccionada
         self.archivos = []
         # Carpeta de base usada como referencia para las rutas relativas
         self.carpeta_base = ""
+        # Inicializa la ventana
+        self.setup_ui(root)
+
+    def setup_ui(self, root):
+        """Inicializa ui"""
+        # Inicializa la ventana principal
+        self.root = root
+        self.root.title("🧠 Comparador de Archivos")
+        self.root.geometry("1000x600")
 
         # Botón para seleccionar la carpeta con los archivos
         self.boton_seleccionar = tk.Button(root, text="📂 Seleccionar Carpeta", command=self.seleccionar_carpeta)
