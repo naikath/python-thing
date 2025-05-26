@@ -10,6 +10,7 @@ from pptx import Presentation
 from docx import Document
 from openpyxl import load_workbook
 
+
 def custom_prompt(parent: tk.Misc, archivo1: str, archivo2: str) -> str | None:
     """Crea prompt para elegir opciones"""
     # Crea una ventana para el prompt
@@ -50,6 +51,7 @@ def custom_prompt(parent: tk.Misc, archivo1: str, archivo2: str) -> str | None:
     # Espera a que la ventana se cierre (al elegir una opcion)
     prompt_window.wait_window()
     return resultado["value"]
+
 
 class ComparadorArchivosApp:
     """Clase principal de la aplicación"""
@@ -147,14 +149,14 @@ class ComparadorArchivosApp:
             if len(grupo) > 1:
                 # Compara todos los pares posibles dentro del grupo de archivos con el mismo hash
                 for i in range(len(grupo)):
-                    for j in range(i+1, len(grupo)):
+                    for j in range(i + 1, len(grupo)):
                         # Añade el primero en la lista de los hash y todos los demas como duplicados
                         self.agregar_resultado(grupo[i], grupo[j], 1.0)
 
         # 📐 Comparación por contenido textual (diapositivas)
         # Compara todos los pares de archivos diferentes
         for i in range(len(self.archivos)):
-            for j in range(i+1, len(self.archivos)):
+            for j in range(i + 1, len(self.archivos)):
                 # Selecciona dos archivos distintos
                 a1, a2 = self.archivos[i], self.archivos[j]
 
@@ -180,7 +182,7 @@ class ComparadorArchivosApp:
         rel1 = os.path.relpath(archivo1, self.carpeta_base)
         rel2 = os.path.relpath(archivo2, self.carpeta_base)
         # Tipo de archivo
-        tipo: str = os.path.splitext(archivo1)[1].replace('.', '').upper()
+        tipo: str = os.path.splitext(archivo1)[1].replace(".", "").upper()
         # Almacena en la lista el resultado en una tupla
         self.archivos_similares.append((tipo, rel1, rel2, similitud))
 
@@ -192,7 +194,7 @@ class ComparadorArchivosApp:
         # Borra y vuelve a insertar las filas de la tabla
         self.tabla.delete(*self.tabla.get_children())
         for tipo, a1, a2, similitud in self.archivos_similares:
-            self.tabla.insert("", "end", values=(tipo, a1, a2, f"{similitud*100:.1f}%"))
+            self.tabla.insert("", "end", values=(tipo, a1, a2, f"{similitud * 100:.1f}%"))
 
     def borrar_seleccionados(self) -> None:
         """Método para eliminar los archivos seleccionados en la tabla"""
@@ -239,7 +241,11 @@ class ComparadorArchivosApp:
                 continue
 
             # Eliminar de self.similares
-            self.archivos_similares = [tupla for tupla in self.archivos_similares if archivo_borrar_rel not in tupla]
+            self.archivos_similares = [
+                tupla  #
+                for tupla in self.archivos_similares
+                if archivo_borrar_rel not in tupla
+            ]
 
             # Refrescar la tabla
             self.actualizar_tabla()
@@ -260,12 +266,12 @@ class ComparadorArchivosApp:
             return
 
         # Convierte los resultados a un DataFrame de Pandas
-        df = pd.DataFrame([{
-            "Tipo": tipo,
-            "Archivo 1": a1,
-            "Archivo 2": a2,
-            "Similitud (%)": round(similitud * 100, 1)
-        } for tipo, a1, a2, similitud in self.archivos_similares])
+        df = pd.DataFrame(
+            [
+                {"Tipo": tipo, "Archivo 1": a1, "Archivo 2": a2, "Similitud (%)": round(similitud * 100, 1)}  #
+                for tipo, a1, a2, similitud in self.archivos_similares
+            ]
+        )
 
         # Abre el cuadro de diálogo para elegir la ruta y el nombre del archivo a guardar
         ruta = filedialog.asksaveasfilename(defaultextension=".xlsx", filetypes=[("Excel", "*.xlsx")])
@@ -282,9 +288,12 @@ class ComparadorArchivosApp:
     def buscar_archivos(self, carpeta: str) -> list[str]:
         """Busca todos los archivos en la carpeta de forma recursiva"""
         extensiones = (".pptx", ".docx", ".xlsx")
-        return [os.path.join(root, file)
-                for root, _, files in os.walk(carpeta)
-                for file in files if file.lower().endswith(extensiones)]
+        return [
+            os.path.join(root, file)  #
+            for root, _, files in os.walk(carpeta)
+            for file in files
+            if file.lower().endswith(extensiones)
+        ]
 
     def hash_md5(self, archivo: str) -> str:
         """Calcula el hash MD5 (identificador único) de un archivo binario"""
@@ -310,7 +319,12 @@ class ComparadorArchivosApp:
     def extraer_texto_pptx(self, archivo: str) -> str:
         """Extrae el texto de todas las diapositivas de un archivo pptx"""
         prs = Presentation(archivo)
-        return "\n".join(getattr(shape, "text") for slide in prs.slides for shape in slide.shapes if hasattr(shape, "text"))
+        return "\n".join(
+            getattr(shape, "text")  #
+            for slide in prs.slides
+            for shape in slide.shapes
+            if hasattr(shape, "text")
+        )
 
     def extraer_texto_docx(self, archivo: str) -> str:
         """Extrae el texto de todas las diapositivas de un archivo docx"""
@@ -331,7 +345,13 @@ class ComparadorArchivosApp:
         contenido: list[str] = []
         for sheet in wb.worksheets:
             for row in sheet.iter_rows(values_only=True):
-                contenido.extend([str(cell) for cell in row if cell is not None])
+                contenido.extend(
+                    [
+                        str(cell)  #
+                        for cell in row
+                        if cell is not None
+                    ]
+                )
         return "\n".join(contenido)
 
     def limpiar_texto(self, texto: str) -> str:
@@ -341,6 +361,7 @@ class ComparadorArchivosApp:
     def similitud_texto(self, texto1: str, texto2: str) -> float:
         """Calcula la similitud entre dos textos"""
         return SequenceMatcher(None, texto1, texto2).ratio()
+
 
 # --- EJECUCIÓN DE LA APLICACIÓN ---
 if __name__ == "__main__":
