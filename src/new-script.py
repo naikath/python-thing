@@ -18,32 +18,38 @@ def custom_prompt(parent: tk.Misc, archivo1: str, archivo2: str) -> str | None:
     # Bloquea interaccion de las otras ventanas de tkinter
     prompt_window.grab_set()
 
-    # Resultado del prompt
-    result: dict[str, str | None] = {"value": None}
-
     # Texto en la ventana con los archivos
-    tk.Label(prompt_window, text="Elegí el archivo a borrar:", font=("Segoe UI", 10, "bold")).pack(padx=20, pady=(10, 5))
-    tk.Label(prompt_window, text=f"1️⃣ {archivo1}").pack(padx=20, pady=2)
-    tk.Label(prompt_window, text=f"2️⃣ {archivo2}").pack(padx=20, pady=2)
+    texto_prompt_info = tk.Label(prompt_window, text="Elegí el archivo a borrar:", font=("Segoe UI", 10, "bold"))
+    texto_prompt_info.pack(padx=20, pady=(10, 5))
+    texto_archivo_1 = tk.Label(prompt_window, text=f"1️⃣ {archivo1}")
+    texto_archivo_1.pack(padx=20, pady=2)
+    texto_archivo_2 = tk.Label(prompt_window, text=f"2️⃣ {archivo2}")
+    texto_archivo_2.pack(padx=20, pady=2)
+
+    # Resultado del prompt
+    resultado: dict[str, str | None] = {"value": None}
 
     # Guarda el valor y cierra la ventana
-    def choose(option: str) -> None:
-        result["value"] = option
+    def choose(opcion_elegida: str) -> None:
+        resultado["value"] = opcion_elegida
         prompt_window.destroy()
 
     # Crea un frame para el layout
-    frame = tk.Frame(prompt_window)
-    frame.pack(pady=10)
+    frame_botones = tk.Frame(prompt_window)
+    frame_botones.pack(pady=10)
 
     # Crea botones y asigna una funcion para elegir la opcion
-    tk.Button(frame, text="🗑️ Borrar Archivo 1", command=lambda: choose("A")).pack(side="left", padx=5)
-    tk.Button(frame, text="🗑️ Borrar Archivo 2", command=lambda: choose("B")).pack(side="left", padx=5)
+    boton_borrar_archivo_1 = tk.Button(frame_botones, text="🗑️ Borrar Archivo 1", command=lambda: choose("A"))
+    boton_borrar_archivo_1.pack(side="left", padx=5)
+    boton_borrar_archivo_2 = tk.Button(frame_botones, text="🗑️ Borrar Archivo 2", command=lambda: choose("B"))
+    boton_borrar_archivo_2.pack(side="left", padx=5)
     # Crea botón para cancelar y cerrar la ventana
-    tk.Button(frame, text="Cancelar", command=prompt_window.destroy).pack(side="left", padx=5)
+    boton_cancelar = tk.Button(frame_botones, text="Cancelar", command=prompt_window.destroy)
+    boton_cancelar.pack(side="left", padx=5)
 
     # Espera a que la ventana se cierre (al elegir una opcion)
     prompt_window.wait_window()
-    return result["value"]
+    return resultado["value"]
 
 class ComparadorArchivosApp:
     """Clase principal de la aplicación"""
