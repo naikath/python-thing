@@ -115,13 +115,7 @@ class ComparadorArchivosApp:
 
         self.procesar_archivos()
 
-        # Ordenar por tipo, el primer elemento de la tupla
-        self.archivos_similares.sort(key=lambda x: x[0])
-
-        # Volver a mostrar la tabla ordenada
-        self.tabla.delete(*self.tabla.get_children())
-        for tipo, a1, a2, similitud in self.archivos_similares:
-            self.tabla.insert("", "end", values=(tipo, a1, a2, f"{similitud*100:.1f}%"))
+        self.actualizar_tabla()
 
     def procesar_archivos(self) -> None:
         """Procesa y agrupa los archivos similares"""
@@ -184,6 +178,16 @@ class ComparadorArchivosApp:
         # Almacena en la lista el resultado en una tupla
         self.archivos_similares.append((tipo, rel1, rel2, similitud))
 
+    def actualizar_tabla(self) -> None:
+        """Imprime o actualiza la tabla"""
+        # Ordenar por tipo, el primer elemento de la tupla
+        self.archivos_similares.sort(key=lambda x: x[0])
+
+        # Borra y vuelve a insertar las filas de la tabla
+        self.tabla.delete(*self.tabla.get_children())
+        for tipo, a1, a2, similitud in self.archivos_similares:
+            self.tabla.insert("", "end", values=(tipo, a1, a2, f"{similitud*100:.1f}%"))
+
     def borrar_seleccionados(self) -> None:
         """Método para eliminar los archivos seleccionados en la tabla"""
         # Obtiene los elementos seleccionados
@@ -232,10 +236,7 @@ class ComparadorArchivosApp:
             self.archivos_similares = [tupla for tupla in self.archivos_similares if archivo_borrar_rel not in tupla]
 
             # Refrescar la tabla
-            # Elimina las filas seleccionadas de la tabla
-            self.tabla.delete(*self.tabla.get_children())
-            for tipo, a1, a2, similitud in self.archivos_similares:
-                self.tabla.insert("", "end", values=(tipo, a1, a2, f"{similitud*100:.1f}%"))
+            self.actualizar_tabla()
 
         if errores:
             # Si hubo errores, muestra un mensaje con los detalles
