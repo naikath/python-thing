@@ -10,7 +10,7 @@ from pptx import Presentation
 from docx import Document
 from openpyxl import load_workbook
 
-def custom_prompt(parent, archivo1, archivo2):
+def custom_prompt(parent: tk.Misc, archivo1: str, archivo2: str) -> str | None:
     """Crea prompt para elegir opciones"""
     # Crea una ventana para el prompt
     prompt_window = tk.Toplevel(parent)
@@ -19,7 +19,7 @@ def custom_prompt(parent, archivo1, archivo2):
     prompt_window.grab_set()
 
     # Resultado del prompt
-    result = {"value": None}
+    result: dict[str, str | None] = {"value": None}
 
     # Texto en la ventana con los archivos
     tk.Label(prompt_window, text="Elegí el archivo a borrar:", font=("Segoe UI", 10, "bold")).pack(padx=20, pady=(10, 5))
@@ -27,7 +27,7 @@ def custom_prompt(parent, archivo1, archivo2):
     tk.Label(prompt_window, text=f"2️⃣ {archivo2}").pack(padx=20, pady=2)
 
     # Guarda el valor y cierra la ventana
-    def choose(option):
+    def choose(option: str) -> None:
         result["value"] = option
         prompt_window.destroy()
 
