@@ -92,13 +92,17 @@ class ComparadorArchivosApp:
             self.tabla.column(col, width=150 if col == "tipo" else 300)
         self.tabla.pack(expand=True, fill="both")
 
+        frame_botones = tk.Frame(root)
+        frame_botones.pack(pady=10)
+
         # Botón para exportar los resultados a un archivo de Excel
-        self.boton_exportar = tk.Button(root, text="📤 Exportar a Excel", command=self.exportar_excel)
+        self.boton_exportar = tk.Button(frame_botones, text="📤 Exportar a Excel", command=self.exportar_excel)
         self.boton_exportar.pack(pady=5)
+        self.boton_exportar.pack(side="left", padx=5)
 
         # Botón para borrar los archivos seleccionados en la tabla
-        self.boton_borrar = tk.Button(root, text="🗑️ Borrar seleccionados", command=self.borrar_seleccionados)
-        self.boton_borrar.pack(pady=5)
+        self.boton_borrar = tk.Button(frame_botones, text="🗑️ Borrar seleccionados", command=self.borrar_seleccionados)
+        self.boton_borrar.pack(side="left", padx=5)
 
     def seleccionar_carpeta(self) -> None:
         """Selecciona y procesa una carpeta si es seleccionada"""
