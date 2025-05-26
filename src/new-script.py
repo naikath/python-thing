@@ -53,9 +53,9 @@ class ComparadorArchivosApp:
         # Lista que almacena los resultados de archivos similares
         self.archivos_similares = []
         # Lista que almacena los archivos encontrados en la carpeta seleccionada
-        self.archivos = []
+        self.archivos: list[str] = []
         # Carpeta de base usada como referencia para las rutas relativas
-        self.carpeta_base = ""
+        self.carpeta_base: str = ""
         # Inicializa la ventana
         self.setup_ui(root)
 
@@ -92,7 +92,7 @@ class ComparadorArchivosApp:
         self.boton_borrar = tk.Button(root, text="🗑️ Borrar seleccionados", command=self.borrar_seleccionados)
         self.boton_borrar.pack(pady=5)
 
-    def seleccionar_carpeta(self):
+    def seleccionar_carpeta(self) -> None:
         """Selecciona y procesa una carpeta si es seleccionada"""
         # Selecciona una carpeta con un explorador de archivos
         carpeta = filedialog.askdirectory()
@@ -103,7 +103,7 @@ class ComparadorArchivosApp:
             # Procesa los archivos dentro de la carpeta
             self.procesar_carpeta(carpeta)
 
-    def procesar_carpeta(self, carpeta):
+    def procesar_carpeta(self, carpeta: str) -> None:
         """Procesa la carpeta con todos los metodos"""
         # Limpia la lista de archivos similares existentes
         self.archivos_similares.clear()
@@ -267,7 +267,7 @@ class ComparadorArchivosApp:
     # FUNCIONES AUXILIARES
     # -------------------------------
 
-    def buscar_archivos(self, carpeta):
+    def buscar_archivos(self, carpeta: str) -> list[str]:
         """Busca todos los archivos en la carpeta de forma recursiva"""
         extensiones = (".pptx", ".docx", ".xlsx")
         return [os.path.join(root, file)
