@@ -5,6 +5,7 @@ from tkinter import filedialog, messagebox, ttk
 from difflib import SequenceMatcher
 from collections import defaultdict
 import pandas as pd
+import customtkinter as ctk
 
 from pptx import Presentation
 from docx import Document
@@ -14,17 +15,17 @@ from openpyxl import load_workbook
 def custom_prompt(parent: tk.Misc, archivo1: str, archivo2: str) -> str | None:
     """Crea prompt para elegir opciones"""
     # Crea una ventana para el prompt
-    prompt_window = tk.Toplevel(parent)
+    prompt_window = ctk.CTkToplevel(parent)
     prompt_window.title("¿Qué archivo querés borrar?")
     # Bloquea interaccion de las otras ventanas de tkinter
     prompt_window.grab_set()
 
     # Texto en la ventana con los archivos
-    texto_prompt_info = tk.Label(prompt_window, text="Elegí el archivo a borrar:", font=("Segoe UI", 10, "bold"))
+    texto_prompt_info = ctk.CTkLabel(prompt_window, text="Elegí el archivo a borrar:", font=("Segoe UI", 10, "bold"))
     texto_prompt_info.pack(padx=20, pady=(10, 5))
-    texto_archivo_1 = tk.Label(prompt_window, text=f"1️⃣ {archivo1}")
+    texto_archivo_1 = ctk.CTkLabel(prompt_window, text=f"1️⃣ {archivo1}")
     texto_archivo_1.pack(padx=20, pady=2)
-    texto_archivo_2 = tk.Label(prompt_window, text=f"2️⃣ {archivo2}")
+    texto_archivo_2 = ctk.CTkLabel(prompt_window, text=f"2️⃣ {archivo2}")
     texto_archivo_2.pack(padx=20, pady=2)
 
     # Resultado del prompt
@@ -36,16 +37,16 @@ def custom_prompt(parent: tk.Misc, archivo1: str, archivo2: str) -> str | None:
         prompt_window.destroy()
 
     # Crea un frame para el layout
-    frame_botones = tk.Frame(prompt_window)
+    frame_botones = ctk.CTkFrame(prompt_window)
     frame_botones.pack(pady=10)
 
     # Crea botones y asigna una funcion para elegir la opcion
-    boton_borrar_archivo_1 = tk.Button(frame_botones, text="🗑️ Borrar Archivo 1", command=lambda: choose("A"))
+    boton_borrar_archivo_1 = ctk.CTkButton(frame_botones, text="🗑️ Borrar Archivo 1", command=lambda: choose("A"))
     boton_borrar_archivo_1.pack(side="left", padx=5)
-    boton_borrar_archivo_2 = tk.Button(frame_botones, text="🗑️ Borrar Archivo 2", command=lambda: choose("B"))
+    boton_borrar_archivo_2 = ctk.CTkButton(frame_botones, text="🗑️ Borrar Archivo 2", command=lambda: choose("B"))
     boton_borrar_archivo_2.pack(side="left", padx=5)
     # Crea botón para cancelar y cerrar la ventana
-    boton_cancelar = tk.Button(frame_botones, text="Cancelar", command=prompt_window.destroy)
+    boton_cancelar = ctk.CTkButton(frame_botones, text="Cancelar", command=prompt_window.destroy)
     boton_cancelar.pack(side="left", padx=5)
 
     # Espera a que la ventana se cierre (al elegir una opcion)
@@ -56,7 +57,7 @@ def custom_prompt(parent: tk.Misc, archivo1: str, archivo2: str) -> str | None:
 class ComparadorArchivosApp:
     """Clase principal de la aplicación"""
 
-    def __init__(self, root: tk.Tk) -> None:
+    def __init__(self, root: ctk.CTk) -> None:
         # Inicializa variables
         # Lista que almacena los resultados de archivos similares
         self.archivos_similares: list[tuple[str, str, str, float]] = []
@@ -67,7 +68,7 @@ class ComparadorArchivosApp:
         # Inicializa la ventana
         self.setup_ui(root)
 
-    def setup_ui(self, root: tk.Tk) -> None:
+    def setup_ui(self, root: ctk.CTk) -> None:
         """Inicializa ui"""
         # Inicializa la ventana principal
         self.root = root
@@ -75,11 +76,11 @@ class ComparadorArchivosApp:
         self.root.geometry("1000x600")
 
         # Botón para seleccionar la carpeta con los archivos
-        self.boton_seleccionar = tk.Button(root, text="📂 Seleccionar Carpeta", command=self.seleccionar_carpeta)
+        self.boton_seleccionar = ctk.CTkButton(root, text="📂 Seleccionar Carpeta", command=self.seleccionar_carpeta)
         self.boton_seleccionar.pack(pady=10)
 
         # Texto con información de la carpeta seleccionada
-        self.texto_info = tk.Label(root, text="No hay carpeta seleccionada")
+        self.texto_info = ctk.CTkLabel(root, text="No hay carpeta seleccionada")
         self.texto_info.pack()
 
         # Tabla con columnas agrupadas por tipo de archivo
@@ -92,16 +93,16 @@ class ComparadorArchivosApp:
             self.tabla.column(col, width=150 if col == "tipo" else 300)
         self.tabla.pack(expand=True, fill="both")
 
-        frame_botones = tk.Frame(root)
+        frame_botones = ctk.CTkFrame(root)
         frame_botones.pack(pady=10)
 
         # Botón para exportar los resultados a un archivo de Excel
-        self.boton_exportar = tk.Button(frame_botones, text="📤 Exportar a Excel", command=self.exportar_excel)
+        self.boton_exportar = ctk.CTkButton(frame_botones, text="📤 Exportar a Excel", command=self.exportar_excel)
         self.boton_exportar.pack(pady=5)
         self.boton_exportar.pack(side="left", padx=5)
 
         # Botón para borrar los archivos seleccionados en la tabla
-        self.boton_borrar = tk.Button(frame_botones, text="🗑️ Borrar seleccionados", command=self.borrar_seleccionados)
+        self.boton_borrar = ctk.CTkButton(frame_botones, text="🗑️ Borrar seleccionados", command=self.borrar_seleccionados)
         self.boton_borrar.pack(side="left", padx=5)
 
     def seleccionar_carpeta(self) -> None:
@@ -110,7 +111,7 @@ class ComparadorArchivosApp:
         carpeta = filedialog.askdirectory()
         if carpeta:
             # Actualiza texto con la carpeta seleccionada
-            self.texto_info.config(text=f"📁 Carpeta seleccionada: {carpeta}")
+            self.texto_info.configure(text=f"📁 Carpeta seleccionada: {carpeta}")
             self.carpeta_base = carpeta
             # Procesa los archivos dentro de la carpeta
             self.procesar_carpeta(carpeta)
@@ -369,6 +370,6 @@ class ComparadorArchivosApp:
 
 # --- EJECUCIÓN DE LA APLICACIÓN ---
 if __name__ == "__main__":
-    root = tk.Tk()
+    root = ctk.CTk()
     app = ComparadorArchivosApp(root)
     root.mainloop()
