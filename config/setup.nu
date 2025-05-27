@@ -52,7 +52,7 @@ alias py = python
 
 # Install python required dependencies
 def py-install-deps [] {
-	const deps = [pandas python-pptx pyinstaller python-docx openpyxl]
+	const deps = [pandas python-pptx pyinstaller python-docx openpyxl customtkinter]
 	pip install ...$deps
 }
 
