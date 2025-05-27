@@ -371,5 +371,8 @@ class ComparadorArchivosApp:
 # --- EJECUCIÓN DE LA APLICACIÓN ---
 if __name__ == "__main__":
     root = ctk.CTk()
+    ctk.set_appearance_mode("dark")
+    theme_path = os.path.join(os.path.dirname(__file__), "custom-theme.json")
+    ctk.set_default_color_theme(theme_path)
     app = ComparadorArchivosApp(root)
     root.mainloop()
