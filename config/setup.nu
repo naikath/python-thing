@@ -9,14 +9,15 @@ if $os_name == "linux" {
 	
 	# create venv if doesn't exists
 	if not ($path_venv | path exists) {
+		print $'Creating Python venv'
 		python3 -m venv $path_venv
-		print $'python venv created'
+		print $'Python venv created'
 	}
 	
 	# add venv bin directory to the path
 	if ($path_venv_bin not-in $env.PATH) {
 		path add $path_venv_bin
-		print $'Added to PATH: "($path_venv_bin)"'
+		print $"Added to PATH:\n\"($path_venv_bin)\""
 	}
 
 } else if $os_name == "windows" {
@@ -40,7 +41,7 @@ if $os_name == "linux" {
 		|path|
 		if ($path not-in $env.PATH) {
 			path add $path
-			print $'Added to PATH: "($path)"'
+			print $"Added to PATH:\n\"($path)\""
 		}
 	}
 
