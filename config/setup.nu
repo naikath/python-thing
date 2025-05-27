@@ -1,10 +1,18 @@
 # source ./config/setup.nu
 
 const proyect_root = path self ..
-const script_name = 'pptx-comparador-gui.py'
+const script_name = 'new-script.py'
 const path_script = $'($proyect_root)/src/($script_name)'
-const exe_name = 'ComparadorPPTX'
-const deps = [pandas python-pptx pyinstaller python-docx openpyxl customtkinter]
+const exe_name = 'ComparadorDeArchivos'
+
+const python_dependencies = [
+	pandas
+	python-pptx
+	pyinstaller
+	python-docx
+	openpyxl
+	customtkinter
+]
 
 def --env py-setup [] {
 	use std "path add"
@@ -62,9 +70,16 @@ source ./git-aliases-source.nu
 
 alias py = python
 
+# Run the script
+def py-run [] {
+	cd $proyect_root
+	py $path_script
+}
+
 # Install python required dependencies
 def py-install-deps [] {
-	pip install ...$deps
+	cd $proyect_root
+	pip install ...$python_dependencies
 }
 
 # Create python executable
